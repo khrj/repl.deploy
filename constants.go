@@ -24,3 +24,20 @@ PUN9Kexr5nSWWfb0AJRTaZBxiXx4SKdo2yw6aaoIAOo6SyJLm0u0Qwa5Xm7GG0NS
 +9P0tsivT3+qKNy4BGin8mSBOCixhrL2YnNK5pOHrCXot562HTFKgvYz35u6sS6L
 yggLIsW8CUnOIhj0AKovh9OvyC//N/GRLQIDAQAB
 -----END RSA PUBLIC KEY-----`
+
+// Strings
+const sEndpoint = "/refresh"
+const sPort = ":8090"
+const sReplitDeployJsonPath = "./replit-deploy.json"
+const sSignatureHeaderName = "Signature"
+
+// Errors
+const sBodyParseError = "Failed to parse body"
+const sInvalidSignatureError = "Invalid Signature"
+const sPrivateKeyParseError = "Couldn't parse public key, open a new issue"
+const sBadPayloadError = "Bad payload"
+const sSignatureTooOldError = "Signature too old"
+const sBadEndpointError = "Signed request not intended for current endpoint"
+const sMissingConfigFileError = "Config file doesn't exist"
+const sUnexpectedHTTPServerCloseError = "Deploy daemon HTTP server exited unexpectedly"
+const sInvalidJSONError = "Invalid config JSON"

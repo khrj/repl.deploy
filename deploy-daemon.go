@@ -19,12 +19,44 @@ import (
 var validate *validator.Validate
 
 func main() {
-	// Config parsing
+	config := parseConfig()
+	rsaPublicKey := parseKey()
 
-	configData, err := os.ReadFile("./replit-deploy.json")
+	http.HandleFunc(sEndpoint, func(w http.ResponseWriter, req *http.Request) {
+		body, err := io.ReadAll(req.Body)
+
+		if err != nil {
+			http.Error(w, sBodyParseError, http.StatusBadRequest)
+			return
+		}
+
+		signature := req.Header.Get(sSignatureHeaderName)
+
+		if isSignatureOK(rsaPublicKey, signature, body) {
+			if isPayloadOK(w, body, config) {
+
+			}
+		} else {
+			http.Error(w, sInvalidSignatureError, http.StatusForbidden)
+			return
+		}
+	})
+
+	err := http.ListenAndServe(sPort, nil)
 
 	if err != nil {
-		log.Fatalln("Config file doesn't exist")
+		log.Fatalln(sUnexpectedHTTPServerCloseError)
+		os.Exit(1)
+	}
+}
+
+func parseConfig() Config {
+	// Config parsing
+
+	configData, err := os.ReadFile(sReplitDeployJsonPath)
+
+	if err != nil {
+		log.Fatalln(sMissingConfigFileError)
 		os.Exit(1)
 	}
 
@@ -32,7 +64,7 @@ func main() {
 	err = json.Unmarshal(configData, &config)
 
 	if err != nil {
-		log.Fatalln("Invalid config JSON")
+		log.Fatalln(sInvalidJSONError)
 		os.Exit(1)
 	}
 
@@ -46,55 +78,44 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Key parsing
+	return config
+}
 
+func parseKey() *rsa.PublicKey {
 	block, _ := pem.Decode([]byte(ReplDeployPublicKey))
 	rsaPublicKey, err := x509.ParsePKCS1PublicKey(block.Bytes)
 
 	if err != nil {
-		panic("Couldn't parse public key, open a new issue")
+		panic(sPrivateKeyParseError)
 	}
 
-	http.HandleFunc("/refresh", func(w http.ResponseWriter, req *http.Request) {
-		body, err := io.ReadAll(req.Body)
-
-		if err != nil {
-			http.Error(w, "Failed to parse body", http.StatusBadRequest)
-			return
-		}
-
-		signature := req.Header.Get("Signature")
-
-		if isSignatureOK(rsaPublicKey, signature, body) {
-
-			var payload Payload
-			err = json.Unmarshal(body, &payload)
-
-			if err != nil {
-				http.Error(w, "Bad payload", http.StatusBadRequest)
-				return
-			}
-
-			if isOlderThanFifteenSeconds(payload.Timestamp) {
-				http.Error(w, "Signature too old", http.StatusUnauthorized)
-				return
-			}
-
-			if config.Endpoint != payload.Endpoint {
-				http.Error(w, "Signed request not intended for current endpoint", http.StatusForbidden)
-				return
-			}
-		} else {
-			http.Error(w, "Invalid Signature", http.StatusForbidden)
-			return
-		}
-	})
-
-	_ = http.ListenAndServe(":8090", nil)
+	return rsaPublicKey
 }
 
 func isOlderThanFifteenSeconds(ts int) bool {
 	return ts < int((time.Now().UnixNano()/1000000)-15000)
+}
+
+func isPayloadOK(w http.ResponseWriter, body []byte, config Config) bool {
+	var payload Payload
+	err := json.Unmarshal(body, &payload)
+
+	if err != nil {
+		http.Error(w, sBadPayloadError, http.StatusBadRequest)
+		return false
+	}
+
+	if isOlderThanFifteenSeconds(payload.Timestamp) {
+		http.Error(w, sSignatureTooOldError, http.StatusUnauthorized)
+		return false
+	}
+
+	if config.Endpoint != payload.Endpoint {
+		http.Error(w, sBadEndpointError, http.StatusForbidden)
+		return false
+	}
+
+	return true
 }
 
 func isSignatureOK(key *rsa.PublicKey, signature string, body []byte) bool {
