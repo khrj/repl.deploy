@@ -92,8 +92,14 @@ func parseArgs() (bool, []string) {
 }
 
 func buildCmd(cmdAndArgs []string) *exec.Cmd {
-	cmd := cmdAndArgs[1]
+	cmd := cmdAndArgs[0]
 	cmdArgs := cmdAndArgs[1:]
 
-	return exec.Command(cmd, cmdArgs...)
+	cmdToExec := exec.Command(cmd, cmdArgs...)
+
+	cmdToExec.Stdout = os.Stdout
+	cmdToExec.Stderr = os.Stderr
+	cmdToExec.Stdin = os.Stdin
+
+	return cmdToExec
 }
