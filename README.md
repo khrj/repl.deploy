@@ -83,7 +83,7 @@ rm repl.deploy.tar.gz
   A: It the Replit `Run` button run the daemon instead of executing the program directly, which then executes/re-executes the program on `git push`
  
 - **Q: Does repl.deploy need to be downloaded every time the program is run?**  
-  A: No, repl.deploy only needs to downloaded once per repl
+  A: No, repl.deploy only needs to be downloaded once per repl
   
 - **Q: What's `https://repl-deploy.vercel.app/`?**  
   A: A hosted version of [getReleaseURL](https://github.com/KhushrajRathod/getReleaseURL), which saves you the time of manually finding the latest release and linking it.
