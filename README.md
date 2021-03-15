@@ -22,6 +22,13 @@
 - A GitHub app, which listens for code changes and sends events to your repl
 - A daemon, which runs on your repl, listens for events, fetches changes from GitHub and restarts your application 
 
+## Table of Contents
+
+- [Usage](#usage)
+- [How?](#how)
+- [FAQ](#faq)
+- [Supporters](#supporters)
+
 ## Usage
 
 1. [Authorize repl.deploy](#TODO) to get events from GitHub
@@ -69,6 +76,17 @@ rm repl.deploy.tar.gz
 - If the request is valid, the daemon 
     - runs `git fetch --all` and then `git reset --hard origin/main`
     - restarts your program
+
+## FAQ
+
+- **Q: What does `run="./repl.deploy --standalone node index.js"` do?**  
+  A: It the Replit `Run` button run the daemon instead of executing the program directly, which then executes/re-executes the program on `git push`
+ 
+- **Q: Does repl.deploy need to be downloaded every time the program is run?**  
+  A: No, repl.deploy only needs to downloaded once per repl
+  
+- **Q: What's `https://repl-deploy.vercel.app/`?**  
+  A: A hosted version of [getReleaseURL](https://github.com/KhushrajRathod/getReleaseURL), which saves you the time of manually finding the latest release and linking it.
 
 ## Supporters
 
