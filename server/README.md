@@ -21,7 +21,9 @@ docker build -t repl-deploy-bot .
 # 2. Start container
 docker run -e APP_ID=<app-id> -e PRIVATE_KEY=<pem-value> repl-deploy-bot
 ```
+
 Ï
+
 ## License
 
 [MIT](LICENSE) © 2021 Khushraj Rathod <khushraj.rathod@gmail.com>
