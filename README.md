@@ -6,7 +6,6 @@
     </p>
     <p>
         <img alt="build" src="https://img.shields.io/github/workflow/status/KhushrajRathod/repl.deploy/release">
-        <img alt="lint" src="https://img.shields.io/github/workflow/status/KhushrajRathod/repl.deploy/lint?label=lint">
         <img alt="language" src="https://img.shields.io/github/languages/top/KhushrajRathod/repl.deploy" >
         <img alt="code size" src="https://img.shields.io/github/languages/code-size/KhushrajRathod/repl.deploy">
         <img alt="issues" src="https://img.shields.io/github/issues/KhushrajRathod/repl.deploy" >
