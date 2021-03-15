@@ -10,7 +10,7 @@
     "useTabs": false,
     "indentWidth": 4,
     "includes": [
-        "**/*.{ts,tsx,js,jsx,json,md,rs}"
+        "api/*.{ts,tsx,js,jsx,json,md,rs}"
     ],
     "excludes": [
         "**/node_modules",
