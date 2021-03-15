@@ -1,11 +1,13 @@
 package server
 
 import (
-	"github.com/KhushrajRathod/repl.deploy/signature"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/KhushrajRathod/repl.deploy/signature"
 )
 
 func Listen(handler func() error) {
@@ -35,7 +37,7 @@ func Listen(handler func() error) {
 		err = handler()
 
 		if err != nil {
-			
+			fmt.Fprintf(w, "OK")
 		}
 	})
 
