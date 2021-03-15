@@ -1,4 +1,4 @@
-package main
+package signature
 
 type Payload struct {
 	Timestamp int    `json:"timestamp" validate:"required,numeric"`
@@ -7,4 +7,9 @@ type Payload struct {
 
 type Config struct {
 	Endpoint string `json:"endpoint" validate:"required,url"`
+}
+
+type ValidationError struct {
+	Err    string
+	Status int
 }
