@@ -9,7 +9,7 @@ type Config struct {
 	Endpoint string `json:"endpoint" validate:"required,url"`
 }
 
-type ValidationError struct {
-	Err    string `json:"error"`
+type ValidationResult struct {
+	Body    string `json:"body"`
 	Status int    `json:"status"`
 }

@@ -12,12 +12,12 @@ import (
 var config = parseConfig()
 var rsaPublicKey = parseKey()
 
-func ValidateSignatureAndPayload(signature string, body []byte) *ValidationError {
+func ValidateSignatureAndPayload(signature string, body []byte) *ValidationResult {
 	err := validateSignature(rsaPublicKey, signature, body)
 
 	if err != nil {
-		return &ValidationError{
-			Err:    sInvalidSignatureError,
+		return &ValidationResult{
+			Body:    sInvalidSignatureError,
 			Status: http.StatusForbidden,
 		}
 	}
@@ -31,27 +31,27 @@ func ValidateSignatureAndPayload(signature string, body []byte) *ValidationError
 	return nil
 }
 
-func validatePayload(body []byte, config Config) *ValidationError {
+func validatePayload(body []byte, config Config) *ValidationResult {
 	var payload Payload
 	err := json.Unmarshal(body, &payload)
 
 	if err != nil {
-		return &ValidationError{
-			Err:    sBadPayloadError,
+		return &ValidationResult{
+			Body:    sBadPayloadError,
 			Status: http.StatusBadRequest,
 		}
 	}
 
 	if isOlderThanFifteenSeconds(payload.Timestamp) {
-		return &ValidationError{
-			Err:    sSignatureTooOldError,
+		return &ValidationResult{
+			Body:    sSignatureTooOldError,
 			Status: http.StatusUnauthorized,
 		}
 	}
 
 	if config.Endpoint != payload.Endpoint {
-		return &ValidationError{
-			Err:    sBadEndpointError,
+		return &ValidationResult{
+			Body:    sBadEndpointError,
 			Status: http.StatusForbidden,
 		}
 	}

@@ -32,7 +32,7 @@ func Listen(handler func() error) {
 		validationError := signature.ValidateSignatureAndPayload(signatureHeader, body)
 
 		if validationError != nil {
-			http.Error(w, validationError.Err, validationError.Status)
+			http.Error(w, validationError.Body, validationError.Status)
 			log.Println(sSignatureValidationFailedWarn)
 			log.Println(statRequestValidationFailed)
 			return
