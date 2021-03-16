@@ -16,7 +16,6 @@ func parseConfig() Config {
 
 	if err != nil {
 		log.Fatalln(sMissingConfigFileError)
-		os.Exit(1)
 	}
 
 	var config Config
@@ -24,7 +23,6 @@ func parseConfig() Config {
 
 	if err != nil {
 		log.Fatalln(sInvalidJSONError)
-		os.Exit(1)
 	}
 
 	validate := validator.New()
@@ -32,7 +30,7 @@ func parseConfig() Config {
 
 	if err != nil {
 		for _, e := range err.(validator.ValidationErrors) {
-			log.Fatalln(e)
+			log.Println(e)
 		}
 		os.Exit(1)
 	}

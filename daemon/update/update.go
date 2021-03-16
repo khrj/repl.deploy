@@ -9,14 +9,14 @@ func UpdateGitFromRemote() error {
 	err := gitFetch.Run()
 
 	if err != nil {
-		log.Fatalln(sGitFetchFailedError)
+		log.Println(sGitFetchFailedError)
 		return errors.New(sGitFetchFailedError)
 	}
 
 	err = gitReset.Run()
 
 	if err != nil {
-		log.Fatalln(sGitResetFailedError)
+		log.Println(sGitResetFailedError)
 		return errors.New(sGitResetFailedError)
 	}
 

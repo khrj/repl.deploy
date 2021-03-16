@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/KhushrajRathod/repl.deploy/signature"
 )
@@ -45,6 +44,5 @@ func Listen(handler func() error) {
 
 	if err != nil {
 		log.Fatalln(sUnexpectedHTTPServerCloseError)
-		os.Exit(1)
 	}
 }
