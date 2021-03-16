@@ -11,10 +11,13 @@ import (
 
 func Listen(handler func() error) {
 	http.HandleFunc(sEndpoint, func(w http.ResponseWriter, req *http.Request) {
+		log.Println(statRequestRecieved)
+		
 		body, err := io.ReadAll(req.Body)
 
 		if err != nil {
 			http.Error(w, sBodyParseError, http.StatusBadRequest)
+			log.Println(statRequestValidationFailed)
 			return
 		}
 
@@ -22,6 +25,7 @@ func Listen(handler func() error) {
 
 		if signatureHeader == "" {
 			http.Error(w, sMissingSignatureError, http.StatusUnauthorized)
+			log.Println(statRequestValidationFailed)
 			return
 		}
 
@@ -30,10 +34,15 @@ func Listen(handler func() error) {
 		if validationError != nil {
 			http.Error(w, validationError.Err, validationError.Status)
 			log.Println(sSignatureValidationFailedWarn)
+			log.Println(statRequestValidationFailed)
 			return
 		}
 
+		log.Println(statRequestValidationSuccess)
+
 		err = handler()
+
+		log.Println(statProgramStart)
 
 		if err != nil {
 			fmt.Fprintf(w, "OK")

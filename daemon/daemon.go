@@ -29,7 +29,6 @@ func main() {
 			return updateAndRestartProcess(true)
 		})
 	} else {
-
 		stdio.HandleStdio(cmd, func() (*exec.Cmd, error) {
 			err := updateAndRestartProcess(false)
 			return cmd, err
