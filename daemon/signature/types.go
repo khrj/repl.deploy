@@ -10,6 +10,6 @@ type Config struct {
 }
 
 type ValidationError struct {
-	Err    string
-	Status int
+	Err    string `json:"error"`
+	Status int    `json:"status"`
 }
