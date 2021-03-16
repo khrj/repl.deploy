@@ -46,7 +46,7 @@ func scanProcessStdoutAndValidate(cmd *exec.Cmd) error {
 	reader := bufio.NewReader(cmdReader)
 	validatedChannel := make(chan bool)
 
-	log.Println("Program has been started.")
+	log.Println(statProgramStart)
 
 	go func(reader *bufio.Reader) {
 		scanner := bufio.NewScanner(reader)
@@ -56,13 +56,13 @@ func scanProcessStdoutAndValidate(cmd *exec.Cmd) error {
 			match := regex.FindStringSubmatch(string(text))
 
 			if len(match) >= 2 {
-				log.Println("Recieved restart request from application, processing...")
+				log.Println(statRequestRecieved)
 				payload := match[1]
 				inputSignature := match[2]
 				validationError := signature.ValidateSignatureAndPayload(inputSignature, []byte(payload))
 
 				if validationError != nil {
-					log.Println("Request validation failed, restart will not be triggered")
+					log.Println(statRequestValidationFailed)
 					json, err := json.Marshal(validationError)
 
 					if err != nil {
@@ -83,7 +83,7 @@ func scanProcessStdoutAndValidate(cmd *exec.Cmd) error {
 	}(reader)
 
 	<-validatedChannel
-	log.Println("Request validation successful, restarting program")
+	log.Println(statRequestValidationSuccess)
 	return nil
 }
 
