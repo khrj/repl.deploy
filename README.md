@@ -51,7 +51,7 @@ tar xf repl.deploy.tar.gz
 rm repl.deploy.tar.gz
 ```
 
-6. For repls that do not use an HTTP server in their code [(See example repl)](#TODO)
+6. For repls that do not use an HTTP server in their code [(See example)](https://github.com/KhushrajSandbox/repl.deploy-standalone-example)
     - Create/modify the `.replit` file in the root of your repl and change `run=` to run `./repl.deploy --standalone <command to run your code here>`. E.g.
     ```
     run="./repl.deploy --standalone node index.js"
