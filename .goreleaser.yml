@@ -10,7 +10,7 @@ archives:
   - replacements:
       linux: Linux
       amd64: x86_64
-  - files:
+    files:
       - none*
 
 checksum:
