@@ -42,8 +42,6 @@ func Listen(handler func() error) {
 
 		err = handler()
 
-		logger.Success(statProgramStart)
-
 		if err != nil {
 			fmt.Fprintf(w, "OK")
 		}

@@ -16,3 +16,4 @@ Examples:
 // Errors
 const sFailedToKillChildProcessError = "Failed to kill child process"
 const sFailedToStartChildProcessError = "Failed to start child process"
+const statProgramStart = "Program has been started."

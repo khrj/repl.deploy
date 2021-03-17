@@ -53,6 +53,7 @@ func updateAndRestartProcess(isStandalone bool) error {
 	if isStandalone {
 		cmd = buildCmd(flag.Args(), true)
 		err := cmd.Start()
+		logger.Success(statProgramStart)
 
 		if err != nil {
 			logger.Error(sFailedToKillChildProcessError)
