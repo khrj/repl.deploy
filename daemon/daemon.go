@@ -20,6 +20,7 @@ func main() {
 
 	if isStandalone {
 		err := cmd.Start()
+		logger.Success(statProgramStart)
 
 		if err != nil {
 			logger.FatalError(sFailedToStartChildProcessError)
