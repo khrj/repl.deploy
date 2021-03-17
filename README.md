@@ -31,7 +31,7 @@
 
 ## Usage
 
-1. [Authorize repl.deploy](#TODO) to get events from GitHub
+1. [Authorize repl.deploy](https://github.com/apps/repl-deploy/installations/new) to get events from GitHub
 
 2. Make sure you have a `main` branch on your `origin` remote
 
