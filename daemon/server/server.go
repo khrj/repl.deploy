@@ -3,21 +3,21 @@ package server
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/KhushrajRathod/repl.deploy/signature"
+	"github.com/KhushrajRathod/repl.deploy/logger"
 )
 
 func Listen(handler func() error) {
 	http.HandleFunc(sEndpoint, func(w http.ResponseWriter, req *http.Request) {
-		log.Println(statRequestRecieved)
+		logger.Info(statRequestRecieved)
 		
 		body, err := io.ReadAll(req.Body)
 
 		if err != nil {
 			http.Error(w, sBodyParseError, http.StatusBadRequest)
-			log.Println(statRequestValidationFailed)
+			logger.Warn(statRequestValidationFailed)
 			return
 		}
 
@@ -25,7 +25,7 @@ func Listen(handler func() error) {
 
 		if signatureHeader == "" {
 			http.Error(w, sMissingSignatureError, http.StatusUnauthorized)
-			log.Println(statRequestValidationFailed)
+			logger.Warn(statRequestValidationFailed)
 			return
 		}
 
@@ -33,16 +33,16 @@ func Listen(handler func() error) {
 
 		if validationError != nil {
 			http.Error(w, validationError.Body, validationError.Status)
-			log.Println(sSignatureValidationFailedWarn)
-			log.Println(statRequestValidationFailed)
+			logger.Warn(sSignatureValidationFailedWarn)
+			logger.Warn(statRequestValidationFailed)
 			return
 		}
 
-		log.Println(statRequestValidationSuccess)
+		logger.Success(statRequestValidationSuccess)
 
 		err = handler()
 
-		log.Println(statProgramStart)
+		logger.Success(statProgramStart)
 
 		if err != nil {
 			fmt.Fprintf(w, "OK")
@@ -52,6 +52,6 @@ func Listen(handler func() error) {
 	err := http.ListenAndServe(sPort, nil)
 
 	if err != nil {
-		log.Fatalln(sUnexpectedHTTPServerCloseError)
+		logger.FatalError(sUnexpectedHTTPServerCloseError)
 	}
 }

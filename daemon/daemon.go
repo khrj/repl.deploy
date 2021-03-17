@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 
+	"github.com/KhushrajRathod/repl.deploy/logger"
 	"github.com/KhushrajRathod/repl.deploy/server"
 	"github.com/KhushrajRathod/repl.deploy/stdio"
 	"github.com/KhushrajRathod/repl.deploy/update"
@@ -22,7 +22,7 @@ func main() {
 		err := cmd.Start()
 
 		if err != nil {
-			log.Fatalln(sFailedToStartChildProcessError)
+			logger.FatalError(sFailedToStartChildProcessError)
 		}
 
 		server.Listen(func() error {
@@ -46,7 +46,7 @@ func updateAndRestartProcess(isStandalone bool) error {
 	err = cmd.Process.Kill()
 
 	if err != nil {
-		log.Println(sFailedToKillChildProcessError)
+		logger.Error(sFailedToKillChildProcessError)
 		return err
 	}
 
@@ -55,7 +55,7 @@ func updateAndRestartProcess(isStandalone bool) error {
 		err := cmd.Start()
 
 		if err != nil {
-			log.Println(sFailedToKillChildProcessError)
+			logger.Error(sFailedToKillChildProcessError)
 			return err
 		}
 	} else {

@@ -5,24 +5,26 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
-	"gopkg.in/go-playground/validator.v9"
-	"log"
+	"fmt"
 	"os"
 	"time"
+
+	"github.com/KhushrajRathod/repl.deploy/logger"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 func parseConfig() Config {
 	configData, err := os.ReadFile(sReplitDeployJsonPath)
 
 	if err != nil {
-		log.Fatalln(sMissingConfigFileError)
+		logger.FatalError(sMissingConfigFileError)
 	}
 
 	var config Config
 	err = json.Unmarshal(configData, &config)
 
 	if err != nil {
-		log.Fatalln(sInvalidJSONError)
+		logger.FatalError(sInvalidJSONError)
 	}
 
 	validate := validator.New()
@@ -30,7 +32,7 @@ func parseConfig() Config {
 
 	if err != nil {
 		for _, e := range err.(validator.ValidationErrors) {
-			log.Println(e)
+			logger.Error(fmt.Sprint(e))
 		}
 		os.Exit(1)
 	}

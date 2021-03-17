@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"regexp"
 
+	"github.com/KhushrajRathod/repl.deploy/logger"
 	"github.com/KhushrajRathod/repl.deploy/signature"
 )
 
@@ -18,13 +18,13 @@ func HandleStdio(cmd *exec.Cmd, handler func() (*exec.Cmd, error)) {
 		err := scanProcessStdoutAndValidate(cmd)
 
 		if err != nil {
-			log.Println(err)
+			logger.Error(err.Error())
 		}
 
 		cmd, err = handler()
 
 		if err != nil {
-			log.Println(err)
+			logger.Error(err.Error())
 		}
 	}
 }
@@ -39,14 +39,14 @@ func scanProcessStdoutAndValidate(cmd *exec.Cmd) error {
 	err = cmd.Start()
 
 	if err != nil {
-		log.Println(sFailedToStartChildProcessError)
+		logger.Error(sFailedToStartChildProcessError)
 		return err
 	}
 
 	reader := bufio.NewReader(cmdReader)
 	validatedChannel := make(chan bool)
 
-	log.Println(statProgramStart)
+	logger.Success(statProgramStart)
 
 	go func(reader *bufio.Reader) {
 		scanner := bufio.NewScanner(reader)
@@ -63,17 +63,17 @@ func scanProcessStdoutAndValidate(cmd *exec.Cmd) error {
 			match := regex.FindStringSubmatch(string(text))
 
 			if len(match) >= 2 {
-				log.Println(statRequestRecieved)
+				logger.Info(statRequestRecieved)
 				payload := match[1]
 				inputSignature := match[2]
 				validationError := signature.ValidateSignatureAndPayload(inputSignature, []byte(payload))
 
 				if validationError != nil {
-					log.Println(statRequestValidationFailed)
+					logger.Warn(statRequestValidationFailed)
 					json, err := json.Marshal(validationError)
 
 					if err != nil {
-						log.Println(sProblemsMarshalingJSONError)
+						logger.Error(sProblemsMarshalingJSONError)
 						continue
 					}
 
@@ -81,7 +81,7 @@ func scanProcessStdoutAndValidate(cmd *exec.Cmd) error {
 					_, err = cmdWriter.Write(json)
 
 					if err != nil {
-						log.Println(sProblemsWritingToStdinOfSubprocessError)
+						logger.Error(sProblemsWritingToStdinOfSubprocessError)
 					}
 
 					continue
@@ -97,7 +97,7 @@ func scanProcessStdoutAndValidate(cmd *exec.Cmd) error {
 				json, err := json.Marshal(successMessage)
 
 				if err != nil {
-					log.Println(sProblemsMarshalingJSONError)
+					logger.Error(sProblemsMarshalingJSONError)
 					continue
 				}
 
@@ -105,11 +105,11 @@ func scanProcessStdoutAndValidate(cmd *exec.Cmd) error {
 				_, err = cmdWriter.Write(json)
 
 				if err != nil {
-					log.Println(sProblemsWritingToStdinOfSubprocessError)
+					logger.Error(sProblemsWritingToStdinOfSubprocessError)
 					continue
 				}
 
-				log.Println(sWrittenSuccessJSON)
+				logger.Success(sWrittenSuccessJSON)
 			} else {
 				fmt.Println(text)
 			}
@@ -118,9 +118,9 @@ func scanProcessStdoutAndValidate(cmd *exec.Cmd) error {
 
 	// Read twice, once for signature valid, once for responded successfully
 	<-validatedChannel
-	log.Println(statRequestValidationSuccess)
+	logger.Success(statRequestValidationSuccess)
 	<-validatedChannel
-	log.Println(sRespondedSuccessfully)
+	logger.Success(sRespondedSuccessfully)
 	return nil
 }
 
