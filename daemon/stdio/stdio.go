@@ -37,6 +37,7 @@ func scanProcessStdoutAndValidate(cmd *exec.Cmd) error {
 	}
 
 	err = cmd.Start()
+	logger.Success(statProgramStart)
 
 	if err != nil {
 		logger.Error(sFailedToStartChildProcessError)
