@@ -52,6 +52,13 @@ func scanProcessStdoutAndValidate(cmd *exec.Cmd) error {
 		scanner := bufio.NewScanner(reader)
 		for scanner.Scan() {
 			text := scanner.Text()
+
+			if text == sSuccess {
+				validatedChannel <- true
+				close(validatedChannel)
+				return
+			}
+
 			regex := regexp.MustCompile(sRegex)
 			match := regex.FindStringSubmatch(string(text))
 
@@ -70,20 +77,50 @@ func scanProcessStdoutAndValidate(cmd *exec.Cmd) error {
 						continue
 					}
 
-					cmdWriter.Write(json)
+					json = append(json, []byte("\n")...)
+					_, err = cmdWriter.Write(json)
+
+					if err != nil {
+						log.Println(sProblemsWritingToStdinOfSubprocessError)
+					}
+
 					continue
 				}
 
 				validatedChannel <- true
-				close(validatedChannel)
+
+				successMessage := signature.ValidationResult{
+					Body:   "OK",
+					Status: 200,
+				}
+
+				json, err := json.Marshal(successMessage)
+
+				if err != nil {
+					log.Println(sProblemsMarshalingJSONError)
+					continue
+				}
+
+				json = append(json, []byte("\n")...)
+				_, err = cmdWriter.Write(json)
+
+				if err != nil {
+					log.Println(sProblemsWritingToStdinOfSubprocessError)
+					continue
+				}
+
+				log.Println(sWrittenSuccessJSON)
 			} else {
 				fmt.Println(text)
 			}
 		}
 	}(reader)
 
+	// Read twice, once for signature valid, once for responded successfully
 	<-validatedChannel
 	log.Println(statRequestValidationSuccess)
+	<-validatedChannel
+	log.Println(sRespondedSuccessfully)
 	return nil
 }
 

@@ -57,14 +57,23 @@ rm repl.deploy.tar.gz
     run="./repl.deploy --standalone node index.js"
     ```
 
-7. For repls that use an HTTP server in their code [(See example repl)](#TODO)
+7. For repls that use an HTTP server in their code [(See example)](https://github.com/KhushrajSandbox/repl.deploy-http-example)
     - Create/modify the `.replit` file in the root of your repl and change `run=` to run `./repl.deploy <command to run your code here>`. E.g.
     ```
     run="./repl.deploy node index.js"
     ```
-    - Set up the `/refresh` endpoint, and log a line in the following format to stdout when a request is recieved: `repl.deploy<insert json body here (don't include the angle brackets)><insert "Signature" header here (don't include the angle brackets)>`. E.g.
+    - Set up the `/refresh` endpoint, and log a line in the following format to `stdout` when a request is recieved: `repl.deploy<insert json body here (don't include the angle brackets)><insert "Signature" header here (don't include the angle brackets)>`. E.g.
     ```
     repl.deploy{"timestamp":1615896087141,"endpoint":"https://8c051d0fbc4b.ngrok.io/refresh"}ostjM6/jGmHbRWcHazxKWSPmvgvoIryI9XxLgNKgxPCKRW==
+    ```
+    - Your application will recieve JSON via `stdin`. E.g.
+    ```
+    {"status":"403","body":"Invalid Signature"}
+    ```
+    simply respond with the given status and body (see example)
+    - Once you've responded, log (to `stdout`)
+    ```
+    repl.deploy-success
     ```
 
 8. That's it! Repl.it should automatically pull changes from GitHub the next time you commit
