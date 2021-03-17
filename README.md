@@ -76,7 +76,9 @@ rm repl.deploy.tar.gz
     repl.deploy-success
     ```
 
-8. That's it! Repl.it should automatically pull changes from GitHub the next time you commit
+8. Click `Run` once. Make sure your repl is set to always-on or has a [pinging service](https://uptimerobot.com) set up (otherwise, the daemon will be stopped by repl once you close your browser tab)
+
+9. That's it! Repl.it should automatically pull changes from GitHub the next time you commit
 
 ## How? 
 
