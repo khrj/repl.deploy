@@ -43,8 +43,11 @@ func Listen(handler func() error) {
 		err = handler()
 
 		if err != nil {
-			fmt.Fprintf(w, "OK")
+			logger.Error(err.Error())
+			return
 		}
+
+		fmt.Fprintf(w, "OK")
 	})
 
 	err := http.ListenAndServe(sPort, nil)
