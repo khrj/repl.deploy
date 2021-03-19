@@ -12,6 +12,9 @@
         <img alt="license" src="https://img.shields.io/github/license/KhushrajRathod/repl.deploy">
         <img alt="version" src="https://img.shields.io/github/v/release/KhushrajRathod/repl.deploy">
     </p>
+    <p>
+        <a href="https://www.producthunt.com/posts/repl-deploy?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-repl-deploy" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=288767&theme=dark" alt="repl.deploy - Automatically deploy from GitHub to Replit, lightning fast | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+    </p>
     <br>
     <br>
     <br>
