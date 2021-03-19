@@ -54,12 +54,13 @@ func updateAndRestartProcess(isStandalone bool) error {
 	if isStandalone {
 		cmd = buildCmd(flag.Args(), true)
 		err := cmd.Start()
-		logger.Success(statProgramStart)
 
 		if err != nil {
 			logger.Error(sFailedToStartChildProcessError)
 			return err
 		}
+
+		logger.Success(statProgramStart)
 	} else {
 		cmd = buildCmd(flag.Args(), false)
 	}
