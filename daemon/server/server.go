@@ -5,14 +5,14 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/KhushrajRathod/repl.deploy/signature"
 	"github.com/KhushrajRathod/repl.deploy/logger"
+	"github.com/KhushrajRathod/repl.deploy/signature"
 )
 
 func Listen(handler func() error) {
 	http.HandleFunc(sEndpoint, func(w http.ResponseWriter, req *http.Request) {
 		logger.Info(statRequestRecieved)
-		
+
 		body, err := io.ReadAll(req.Body)
 
 		if err != nil {

@@ -17,7 +17,7 @@ func ValidateSignatureAndPayload(signature string, body []byte) *ValidationResul
 
 	if err != nil {
 		return &ValidationResult{
-			Body:    sInvalidSignatureError,
+			Body:   sInvalidSignatureError,
 			Status: http.StatusForbidden,
 		}
 	}
@@ -37,21 +37,21 @@ func validatePayload(body []byte, config Config) *ValidationResult {
 
 	if err != nil {
 		return &ValidationResult{
-			Body:    sBadPayloadError,
+			Body:   sBadPayloadError,
 			Status: http.StatusBadRequest,
 		}
 	}
 
 	if isOlderThanFifteenSeconds(payload.Timestamp) {
 		return &ValidationResult{
-			Body:    sSignatureTooOldError,
+			Body:   sSignatureTooOldError,
 			Status: http.StatusUnauthorized,
 		}
 	}
 
 	if config.Endpoint != payload.Endpoint {
 		return &ValidationResult{
-			Body:    sBadEndpointError,
+			Body:   sBadEndpointError,
 			Status: http.StatusForbidden,
 		}
 	}

@@ -10,6 +10,6 @@ type Config struct {
 }
 
 type ValidationResult struct {
-	Body    string `json:"body"`
+	Body   string `json:"body"`
 	Status int    `json:"status"`
 }
