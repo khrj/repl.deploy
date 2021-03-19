@@ -25,14 +25,16 @@ PUN9Kexr5nSWWfb0AJRTaZBxiXx4SKdo2yw6aaoIAOo6SyJLm0u0Qwa5Xm7GG0NS
 yggLIsW8CUnOIhj0AKovh9OvyC//N/GRLQIDAQAB
 -----END RSA PUBLIC KEY-----`
 
-// Strings
-const sReplitDeployJsonPath = "./replit-deploy.json"
+const (
+	// Strings
+	sReplitDeployJsonPath = "./replit-deploy.json"
 
-// Errors
-const sInvalidSignatureError = "Invalid Signature"
-const sPrivateKeyParseError = "Couldn't parse public key, open a new issue"
-const sBadPayloadError = "Bad payload"
-const sSignatureTooOldError = "Signature too old"
-const sBadEndpointError = "Signed request not intended for current endpoint"
-const sMissingConfigFileError = "Config file doesn't exist"
-const sInvalidJSONError = "Invalid config JSON"
+	// Errors
+	sInvalidSignatureError  = "Invalid Signature"
+	sPrivateKeyParseError   = "Couldn't parse public key, open a new issue"
+	sBadPayloadError        = "Bad payload"
+	sSignatureTooOldError   = "Signature too old"
+	sBadEndpointError       = "Signed request not intended for current endpoint"
+	sMissingConfigFileError = "Config file doesn't exist"
+	sInvalidJSONError       = "Invalid config JSON"
+)

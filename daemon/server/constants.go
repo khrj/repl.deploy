@@ -1,19 +1,21 @@
 package server
 
-// Strings
-const sEndpoint = "/refresh"
-const sPort = ":8090"
-const sSignatureHeaderName = "Signature"
+const (
+	// Strings
+	sEndpoint            = "/refresh"
+	sPort                = ":8090"
+	sSignatureHeaderName = "Signature"
 
-// Warnings
-const sSignatureValidationFailedWarn = "Signature validation failed for an event, so listeners will not be called"
+	// Warnings
+	sSignatureValidationFailedWarn = "Signature validation failed for an event, so listeners will not be called"
 
-// Errors
-const sBodyParseError = "Failed to parse body"
-const sMissingSignatureError = "Missing Signature"
-const sUnexpectedHTTPServerCloseError = "Builtin HTTP server exited unexpectedly"
+	// Errors
+	sBodyParseError                 = "Failed to parse body"
+	sMissingSignatureError          = "Missing Signature"
+	sUnexpectedHTTPServerCloseError = "Builtin HTTP server exited unexpectedly"
 
-// Status
-const statRequestRecieved = "Recieved restart request from application, processing..."
-const statRequestValidationFailed = "Request validation failed, restart will not be triggered"
-const statRequestValidationSuccess = "Request validation successful, restarting program"
+	// Status
+	statRequestRecieved          = "Recieved restart request from application, processing..."
+	statRequestValidationFailed  = "Request validation failed, restart will not be triggered"
+	statRequestValidationSuccess = "Request validation successful, restarting program"
+)

@@ -14,6 +14,8 @@ Examples:
 `
 
 // Errors
-const sFailedToKillChildProcessError = "Failed to kill child process"
-const sFailedToStartChildProcessError = "Failed to start child process"
-const statProgramStart = "Program has been started."
+const (
+	sFailedToKillChildProcessError  = "Failed to kill child process"
+	sFailedToStartChildProcessError = "Failed to start child process"
+	statProgramStart                = "Program has been started."
+)
