@@ -57,7 +57,7 @@ func updateAndRestartProcess(isStandalone bool) error {
 		logger.Success(statProgramStart)
 
 		if err != nil {
-			logger.Error(sFailedToKillChildProcessError)
+			logger.Error(sFailedToStartChildProcessError)
 			return err
 		}
 	} else {
