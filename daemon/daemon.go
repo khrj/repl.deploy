@@ -18,6 +18,12 @@ func main() {
 	isStandalone, args := parseArgs()
 	cmd = buildCmd(args, isStandalone)
 
+	err := update.UpdateGitFromRemote()
+
+	if err != nil {
+		logger.Warn("Failed to fetch from GitHub on startup, make sure git is set up")
+	}
+
 	if isStandalone {
 		err := cmd.Start()
 		logger.Success(statProgramStart)
