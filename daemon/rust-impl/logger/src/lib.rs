@@ -39,3 +39,27 @@ fn pad_str_with_time(to_pad: &str) -> String {
         to_pad
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn success_msg() {
+        success("Success :)");
+    }
+
+    #[test]
+    fn info_msg() {
+        info("Info (i)");
+    }
+
+    #[test]
+    fn warn_msg() {
+        warn("Warning!?")
+    }
+
+    #[test]
+    fn error_msg() {
+        error("Error :(")
+    }
+}
