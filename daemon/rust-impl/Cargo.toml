@@ -1,0 +1,12 @@
+[workspace]
+
+members = [
+    "cli",
+    "logger",
+
+    "signature_verifier",
+    "git_updater",
+
+    "http_event_handler",
+    "stdio_event_handler"
+]
