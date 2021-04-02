@@ -25,3 +25,24 @@ pub fn update_git_from_remote() -> Result<(), io::Error> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use {
+        super::*,
+        std::{env, fs, path::Path},
+    };
+
+    #[test]
+    fn try_reset() {
+        prepare_repos();
+        assert!(env::set_current_dir(Path::new("./test_repo2")).is_ok());
+        update_git_from_remote().unwrap();
+        let file_contents = fs::read_to_string("./temp").unwrap();
+        assert_eq!(file_contents, "hi")
+    }
+
+    fn prepare_repos() {
+        Command::new("./test_prep.sh").output().unwrap();
+    }
+}
