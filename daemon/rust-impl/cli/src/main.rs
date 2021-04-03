@@ -1,3 +1,4 @@
-fn main() {
-    println!("Hello, world!");
-}
+use cli as lib;
+
+fn main() {}
+
