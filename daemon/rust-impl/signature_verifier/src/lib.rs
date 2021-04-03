@@ -95,8 +95,10 @@ fn validate_signature<'a>(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use std::time::{SystemTime, UNIX_EPOCH};
+    use {
+        super::*,
+        std::time::{SystemTime, UNIX_EPOCH},
+    };
 
     const TEST_ENDPOINT: &str = "https://endpoint.example.com/";
 
