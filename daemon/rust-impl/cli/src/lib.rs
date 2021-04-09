@@ -30,7 +30,7 @@ PUN9Kexr5nSWWfb0AJRTaZBxiXx4SKdo2yw6aaoIAOo6SyJLm0u0Qwa5Xm7GG0NS
 yggLIsW8CUnOIhj0AKovh9OvyC//N/GRLQIDAQAB
 -----END RSA PUBLIC KEY-----
 */
-const REPL_DEPLOY_PUBLIC_KEY: &[u8; 1038] = include_bytes!("../../../public_key.bin");
+const REPL_DEPLOY_PUBLIC_KEY: &[u8; 1038] = include_bytes!("../../static/public_key.bin");
 
 fn watch_or_serve() {
     let repl_deploy_public_key =
