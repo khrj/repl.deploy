@@ -1,7 +1,5 @@
-mod constants;
-
 use {
-    constants::*,
+    constants::{GIT_FETCH_FAILED_ERROR, GIT_RESET_FAILED_ERROR},
     logger,
     std::{io, process::Command},
 };

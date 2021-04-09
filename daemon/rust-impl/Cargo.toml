@@ -2,11 +2,14 @@
 
 members = [
     "cli",
-    "logger",
 
-    "signature_verifier",
-    "git_updater",
+    "static/types",
+    "static/constants",
 
-    "http_event_handler",
-    "stdio_event_handler"
+    "functionality/signature_verifier",
+    "functionality/git_updater",
+    "functionality/logger",
+
+    "event_handlers/http_event_handler",
+    "event_handlers/stdio_event_handler"
 ]
