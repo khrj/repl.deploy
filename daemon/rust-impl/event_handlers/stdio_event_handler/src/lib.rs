@@ -9,7 +9,7 @@ use {
 	rsa::RSAPublicKey,
 	serde_json, signature_verifier,
 	std::{
-		io::{BufRead, BufReader, Write},
+		io::{self, BufRead, BufReader, Write},
 		process::Child,
 	},
 	types::{Config, ValidationResult},
@@ -44,40 +44,54 @@ fn scan_process_stdout_until_successful_request(
 	let reader = BufReader::new(cmd.stdout.as_mut().unwrap());
 	let writer = cmd.stdin.as_mut().unwrap();
 
-	for line in reader.lines() {
-		match line {
-			Ok(line) => {
-				if line == STDIN_SUCCESS {
-					logger::success(STDIN_RESPONDED_SUCCESSFULLY);
-					break;
-				}
+	for line in reader.lines().filter_map(filter_valid_lines) {
+		if line == STDIN_SUCCESS {
+			logger::success(STDIN_RESPONDED_SUCCESSFULLY);
+			break;
+		}
 
-				match stdin_regex.captures(&line) {
-					Some(matches) => {
-						logger::info(STAT_REQUEST_RECEIVED);
+		match get_matches(&line, stdin_regex) {
+			Some((payload, input_signature)) => {
+				logger::info(STAT_REQUEST_RECEIVED);
 
-						let payload = &matches[1];
-						let input_signature = &matches[2];
+				let response = match validation_result_to_bytes(validate_and_return_response(
+					payload,
+					input_signature,
+					config,
+					public_key,
+				)) {
+					Some(r) => r,
+					None => continue,
+				};
 
-						let response =
-							match validation_result_to_string(validate_and_return_response(
-								payload,
-								input_signature,
-								config,
-								public_key,
-							)) {
-								Some(r) => r,
-								None => continue,
-							};
-
-						write_response(response.as_bytes(), writer);
-					}
-					None => println!("{}", &line),
-				}
+				write_response(&response, writer);
 			}
-			Err(_) => logger::error("Failed to read subprocess stdout"),
+			None => println!("{}", &line),
 		}
 	}
+}
+
+// Helpers
+
+fn filter_valid_lines(line: Result<String, io::Error>) -> Option<String> {
+	match line {
+		Ok(line) => Some(line),
+		Err(_) => None,
+	}
+}
+
+fn write_response(response: &[u8], writer: &mut std::process::ChildStdin) {
+	if let Err(_) = writer.write(response) {
+		logger::error(PROBLEMS_WRITING_TO_STDIN_OF_SUBPROCESS_ERROR)
+	};
+}
+
+fn get_matches<'a>(line: &'a str, stdin_regex: &Regex) -> Option<(&'a str, &'a str)> {
+	let matches = stdin_regex.captures(line)?;
+	let payload = matches.get(1)?.as_str();
+	let signature = matches.get(2)?.as_str();
+
+	Some((payload, signature))
 }
 
 fn validate_and_return_response(
@@ -107,20 +121,14 @@ fn validate_and_return_response(
 	};
 }
 
-fn validation_result_to_string(r: ValidationResult) -> Option<String> {
-	match serde_json::to_string(&r) {
+fn validation_result_to_bytes(r: ValidationResult) -> Option<Vec<u8>> {
+	match serde_json::to_vec(&r) {
 		Ok(json) => Some(json),
 		Err(_) => {
 			logger::error(PROBLEMS_SERIALIZING_JSON_ERROR);
 			None
 		}
 	}
-}
-
-fn write_response(response: &[u8], writer: &mut std::process::ChildStdin) {
-	if let Err(_) = writer.write(response) {
-		logger::error(PROBLEMS_WRITING_TO_STDIN_OF_SUBPROCESS_ERROR)
-	};
 }
 
 #[cfg(test)]
