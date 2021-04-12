@@ -1,4 +1,23 @@
-use {constants::PUBLIC_KEY_PARSE_ERROR, rsa::RSAPublicKey, std::process};
+use {
+    anyhow::{bail, Context, Result},
+    constants::{
+        FAILED_TO_KILL_CHILD_PROCESS_ERROR, FAILED_TO_START_CHILD_PROCESS_ERROR,
+        GIT_FETCH_FAILED_STARTUP_WARN, INVALID_CONFIG_JSON_ERROR, MISSING_CONFIG_FILE_ERROR,
+        PUBLIC_KEY_PARSE_ERROR, REPLIT_DEPLOY_JSON_PATH, STAT_PROGRAM_STARTED,
+    },
+    git_updater, http_event_handler, logger,
+    rsa::RSAPublicKey,
+    serde_json,
+    std::{
+        cell::RefCell,
+        fs,
+        process::{self, Child, Command, Stdio},
+        rc::Rc,
+        sync::{Arc, Mutex},
+    },
+    stdio_event_handler,
+    types::Config,
+};
 
 /*
 The included public_key.bin is a decoded version of the key below. To decode
@@ -32,10 +51,140 @@ yggLIsW8CUnOIhj0AKovh9OvyC//N/GRLQIDAQAB
 */
 const REPL_DEPLOY_PUBLIC_KEY: &[u8; 1038] = include_bytes!("../../static/public_key.bin");
 
-fn watch_or_serve() {
+pub enum EventHandler {
+    HTTP,
+    STDIO,
+}
+
+pub async fn listen(event_handler: EventHandler, cmd: String, cmd_args: Vec<String>) {
     let repl_deploy_public_key =
         RSAPublicKey::from_pkcs1(REPL_DEPLOY_PUBLIC_KEY).unwrap_or_else(|_err| {
             println!("{}", PUBLIC_KEY_PARSE_ERROR);
-            process::exit(0);
+            process::exit(1);
         });
+
+    let config: Config = serde_json::from_str(
+        &fs::read_to_string(REPLIT_DEPLOY_JSON_PATH).unwrap_or_else(|_err| {
+            println!("{}", MISSING_CONFIG_FILE_ERROR);
+            process::exit(1);
+        }),
+    )
+    .unwrap_or_else(|_err| {
+        println!("{}", INVALID_CONFIG_JSON_ERROR);
+        process::exit(1)
+    });
+
+    if let Err(e) = git_updater::update_git_from_remote() {
+        logger::error(&e.to_string());
+        logger::warn(GIT_FETCH_FAILED_STARTUP_WARN);
+    }
+
+    match event_handler {
+        EventHandler::HTTP => listen_http(repl_deploy_public_key, config, cmd, cmd_args).await,
+        EventHandler::STDIO => listen_stdio(repl_deploy_public_key, config, cmd, cmd_args),
+    }
+}
+
+async fn listen_http(
+    pub_key: RSAPublicKey,
+    config: Config,
+    cmd: String,
+    cmd_args: Vec<String>
+) {
+    let child = match Command::new(&cmd).args(&cmd_args).spawn() {
+        Ok(child_handle) => child_handle,
+        Err(_) => {
+            logger::fatal_error(FAILED_TO_START_CHILD_PROCESS_ERROR);
+            return;
+        }
+    };
+    http_event_handler::listen(
+        Arc::new(config),
+        Arc::new(pub_key),
+        Arc::new(Mutex::new(child)),
+        move |child| -> Result<()> {
+            let mut c = child.lock().unwrap();
+            let cmd_args: Vec<_> = cmd_args.iter().map(|s| s.as_str()).collect(); 
+            match update_and_restart_process(&mut c, &cmd, &cmd_args, EventHandler::HTTP) {
+                Ok(new_handle) => {
+                    *c = new_handle;
+                    return Ok(());
+                }
+                Err(e) => {
+                    logger::error(&e.to_string());
+                    bail!(e);
+                }
+            };
+        },
+    )
+    .await
+}
+
+fn listen_stdio(pub_key: RSAPublicKey, config: Config, cmd: String, cmd_args: Vec<String>) {
+    let mut child = Rc::new(RefCell::new(
+        match Command::new(&cmd)
+            .args(&cmd_args)
+            .stdout(Stdio::piped())
+            .stdin(Stdio::piped())
+            .spawn()
+        {
+            Ok(child_handle) => child_handle,
+            Err(_) => {
+                logger::fatal_error(FAILED_TO_START_CHILD_PROCESS_ERROR);
+                return;
+            }
+        },
+    ));
+
+    stdio_event_handler::listen(&pub_key, &config, child.clone(), &mut move || {
+        let child_ref = child.clone();
+        let cmd_args: Vec<_> = cmd_args.iter().map(|s| s.as_str()).collect(); 
+        let result = update_and_restart_process(
+            &mut *child_ref.borrow_mut(),
+            &cmd,
+            &cmd_args,
+            EventHandler::STDIO,
+        );
+
+        match result {
+            Ok(new_handle) => {
+                child = Rc::new(RefCell::new(new_handle));
+                return Ok(child.clone());
+            }
+            Err(e) => {
+                logger::error(&e.to_string());
+                bail!(e);
+            }
+        };
+    })
+}
+
+fn update_and_restart_process(
+    child_handle: &mut Child,
+    cmd: &str,
+    cmd_args: &[&str],
+    event_handler: EventHandler,
+) -> Result<Child> {
+    git_updater::update_git_from_remote()?;
+
+    child_handle
+        .kill()
+        .with_context(|| FAILED_TO_KILL_CHILD_PROCESS_ERROR)?;
+
+    let child = match event_handler {
+        EventHandler::HTTP => Command::new(cmd).args(cmd_args).spawn(),
+        EventHandler::STDIO => Command::new(cmd)
+            .args(cmd_args)
+            .stdout(Stdio::piped())
+            .stdin(Stdio::piped())
+            .spawn(),
+    };
+
+    match child {
+        Ok(child_handle) => {
+            logger::success(STAT_PROGRAM_STARTED);
+            return Ok(child_handle);
+        }
+        Err(_) => bail!(FAILED_TO_START_CHILD_PROCESS_ERROR),
+    }
 }

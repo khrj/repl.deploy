@@ -1,20 +1,26 @@
 use {
+    anyhow::Result,
     constants::{
-        STAT_REQUEST_RECEIVED, STAT_SIGNATURE_VALIDATION_FAILED, STAT_SIGNATURE_VALIDATION_SUCCESS,
+        BODY_NOT_STRING_ERROR, STAT_REQUEST_RECEIVED, STAT_SIGNATURE_VALIDATION_FAILED,
+        STAT_SIGNATURE_VALIDATION_SUCCESS,
     },
     logger,
     rsa::RSAPublicKey,
     signature_verifier,
-    std::sync::Arc,
+    std::{borrow::Cow, sync::Arc},
     types::Config,
-    warp::{http::Response, Filter},
+    warp::{http::StatusCode, reply, Filter},
 };
 
-pub async fn listen(
+pub async fn listen<S: Send + Sync + Clone + 'static>(
     config_ref: Arc<Config>,
     public_key_ref: Arc<RSAPublicKey>,
-    handler_ref: Arc<impl Fn() -> Result<(), &'static str> + Send + Sync + 'static>,
+    state: S,
+    handler: impl Fn(S) -> Result<()> + Clone + Send + Sync + 'static,
 ) {
+    let config_ref = config_ref.clone();
+    let public_key_ref = public_key_ref.clone();
+    // let state = state.clone();
     let refresher = warp::post()
         .and(warp::path("refresh"))
         .and(warp::body::bytes())
@@ -22,11 +28,16 @@ pub async fn listen(
         .map(move |buf: warp::hyper::body::Bytes, signature: String| {
             let config = config_ref.clone();
             let public_key = public_key_ref.clone();
-            let handler = handler_ref.clone();
+            let state = state.clone();
+            // let handler = handler_ref.clone();
+
             let payload = match String::from_utf8(buf.to_vec()) {
                 Ok(s) => s,
                 Err(_) => {
-                    return Response::builder().status(400).body("OK").unwrap();
+                    return reply::with_status(
+                        Cow::from(BODY_NOT_STRING_ERROR),
+                        StatusCode::BAD_REQUEST,
+                    );
                 }
             };
 
@@ -38,20 +49,26 @@ pub async fn listen(
                 &config,
                 &public_key,
             ) {
-                Ok(()) => {
+                Ok(res) => {
                     logger::success(STAT_SIGNATURE_VALIDATION_SUCCESS);
+                    // let mut handler = handler.lock().unwrap();
 
-                    match handler() {
-                        Ok(()) => return Response::builder().status(200).body("OK").unwrap(),
+                    match handler(state) {
+                        Ok(()) => return reply::with_status(Cow::from(res.body), StatusCode::OK),
                         Err(e) => {
-                            logger::error(e);
-                            return Response::builder().status(500).body(e).unwrap();
+                            let e = e.to_string();
+                            logger::error(&e);
+
+                            return reply::with_status(
+                                Cow::from(e),
+                                StatusCode::INTERNAL_SERVER_ERROR,
+                            );
                         }
                     }
                 }
                 Err(e) => {
                     logger::warn(STAT_SIGNATURE_VALIDATION_FAILED);
-                    return Response::builder().status(e.status).body(e.body).unwrap();
+                    return reply::with_status(Cow::from(e.body), e.status);
                 }
             }
         });
@@ -78,7 +95,6 @@ mod tests {
 
         tokio::spawn(run_server(TEST_ENDPOINT.to_owned(), pub_key));
         let request_thread = tokio::spawn(make_request(TEST_ENDPOINT.to_owned(), priv_key));
-
         assert_eq!(
             request_thread.await.expect("HTTP request failed").status(),
             StatusCode::OK,
@@ -106,7 +122,8 @@ mod tests {
         listen(
             Arc::new(Config { endpoint }),
             Arc::new(pub_key),
-            Arc::new(|| Ok(())),
+            (),
+            move |_| Ok(()),
         )
         .await;
     }

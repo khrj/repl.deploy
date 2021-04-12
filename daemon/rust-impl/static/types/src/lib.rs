@@ -1,4 +1,6 @@
+use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(Serialize, Deserialize)]
 pub struct Payload {
@@ -6,13 +8,19 @@ pub struct Payload {
     pub endpoint: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 pub struct Config {
     pub endpoint: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct ValidationResult<'a> {
     pub body: &'a str,
-    pub status: u16,
+    pub status: StatusCode,
+}
+
+impl<'a> fmt::Display for ValidationResult<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} {}", self.body, self.status)
+    }
 }

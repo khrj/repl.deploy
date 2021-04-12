@@ -1,24 +1,22 @@
 use {
+    anyhow::{bail, Result},
     constants::{GIT_FETCH_FAILED_ERROR, GIT_RESET_FAILED_ERROR},
-    logger,
-    std::{io, process::Command},
+    std::process::Command,
 };
 
-pub fn update_git_from_remote() -> Result<(), io::Error> {
+pub fn update_git_from_remote() -> Result<()> {
     let git_fetch = Command::new("git").args(&["fetch", "--all"]).output();
 
-    if let Err(e) = git_fetch {
-        logger::error(GIT_FETCH_FAILED_ERROR);
-        return Err(e);
+    if let Err(_) = git_fetch {
+        bail!(GIT_FETCH_FAILED_ERROR);
     }
 
     let git_reset = Command::new("git")
         .args(&["reset", "--hard", "origin/main"])
         .output();
 
-    if let Err(e) = git_reset {
-        logger::error(GIT_RESET_FAILED_ERROR);
-        return Err(e);
+    if let Err(_) = git_reset {
+        bail!(GIT_RESET_FAILED_ERROR);
     }
 
     Ok(())

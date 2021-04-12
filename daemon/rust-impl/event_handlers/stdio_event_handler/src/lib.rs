@@ -1,4 +1,5 @@
 use {
+	anyhow::Result,
 	constants::{
 		PROBLEMS_SERIALIZING_JSON_ERROR, PROBLEMS_WRITING_TO_STDIN_OF_SUBPROCESS_ERROR,
 		STAT_REQUEST_RECEIVED, STAT_SIGNATURE_VALIDATION_FAILED, STAT_SIGNATURE_VALIDATION_SUCCESS,
@@ -9,40 +10,52 @@ use {
 	rsa::RSAPublicKey,
 	serde_json, signature_verifier,
 	std::{
+		cell::RefCell,
 		io::{self, BufRead, BufReader, Write},
 		process::Child,
+		rc::Rc,
 	},
 	types::{Config, ValidationResult},
 };
 
 pub fn listen<'a>(
-	config: &Config,
 	public_key: &RSAPublicKey,
-	handler: impl Fn() -> Result<&'a mut Child, &'static str>,
-	cmd: &mut Child,
+	config: &Config,
+	child: Rc<RefCell<Child>>,
+	handler: &mut impl FnMut() -> Result<Rc<RefCell<Child>>>,
 ) {
-	let mut child_ref = cmd;
+	let mut child_ref = child;
 	let stdin_regex = Regex::new(STDIN_REGEX).unwrap();
 	loop {
-		scan_process_stdout_until_successful_request(child_ref, &stdin_regex, config, public_key);
+		scan_process_stdout_until_successful_request(
+			child_ref.clone(),
+			&stdin_regex,
+			config,
+			public_key,
+		);
 
 		match handler() {
-			Ok(new_cmd) => {
-				child_ref = new_cmd;
+			Ok(new_child) => {
+				child_ref = new_child;
 			}
-			Err(e) => logger::error(e),
+			Err(e) => logger::error(&e.to_string()),
 		}
 	}
 }
 
 fn scan_process_stdout_until_successful_request(
-	cmd: &mut Child,
+	child: Rc<RefCell<Child>>,
 	stdin_regex: &Regex,
 	config: &Config,
 	public_key: &RSAPublicKey,
 ) {
-	let reader = BufReader::new(cmd.stdout.as_mut().unwrap());
-	let writer = cmd.stdin.as_mut().unwrap();
+	let mut child = child.borrow_mut();
+
+	let mut stdout = child.stdout.take();
+	let mut stdin = child.stdin.take();
+
+	let reader = BufReader::new(stdout.as_mut().unwrap());
+	let writer = stdin.as_mut().unwrap();
 
 	for line in reader.lines().filter_map(filter_valid_lines) {
 		if line == STDIN_SUCCESS {
@@ -106,22 +119,31 @@ fn validate_and_return_response(
 		config,
 		public_key,
 	) {
-		Ok(()) => {
+		Ok(res) => {
 			logger::success(STAT_SIGNATURE_VALIDATION_SUCCESS);
-
-			return ValidationResult {
-				body: "OK",
-				status: 200,
-			};
+			res
 		}
 		Err(e) => {
 			logger::warn(STAT_SIGNATURE_VALIDATION_FAILED);
-			return e;
+			e
 		}
-	};
+	}
+}
+
+use serde::Serialize;
+
+#[derive(Serialize)]
+struct ValidationResultSerializable<'a> {
+	body: &'a str,
+	status: u16,
 }
 
 fn validation_result_to_bytes(r: ValidationResult) -> Option<Vec<u8>> {
+	let r = ValidationResultSerializable {
+		body: r.body,
+		status: r.status.as_u16(),
+	};
+
 	match serde_json::to_vec(&r) {
 		Ok(json) => Some(json),
 		Err(_) => {

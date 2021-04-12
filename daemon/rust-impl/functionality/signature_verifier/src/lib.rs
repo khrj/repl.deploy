@@ -1,12 +1,13 @@
 mod helpers;
 
 use {
+    anyhow::Result,
     base64,
     constants::{
-        http_status, BAD_ENDPOINT_ERROR, BAD_PAYLOAD_ERROR, INVALID_SIGNATURE_ERROR,
-        PAYLOAD_TOO_OLD_ERROR,
+        BAD_ENDPOINT_ERROR, BAD_PAYLOAD_ERROR, INVALID_SIGNATURE_ERROR, OK, PAYLOAD_TOO_OLD_ERROR,
     },
     helpers::is_older_than_fifteen_seconds,
+    reqwest::StatusCode,
     rsa::{hash, PaddingScheme, PublicKey, RSAPublicKey},
     serde_json,
     sha2::{Digest, Sha256},
@@ -18,20 +19,21 @@ pub fn validate_payload_and_signature<'a>(
     signature: &str,
     config: &Config,
     public_key: &RSAPublicKey,
-) -> Result<(), ValidationResult<'a>> {
+) -> Result<ValidationResult<'a>, ValidationResult<'a>> {
     validate_payload(&payload, &config)?;
-    validate_signature(&payload, &signature, &public_key)?;
-
-    Ok(())
+    validate_signature(&payload, &signature, &public_key)
 }
 
-fn validate_payload<'a>(body: &str, config: &Config) -> Result<(), ValidationResult<'a>> {
+fn validate_payload<'a>(
+    body: &str,
+    config: &Config,
+) -> Result<ValidationResult<'a>, ValidationResult<'a>> {
     let payload: Payload = match serde_json::from_str(body) {
         Ok(payload) => payload,
         Err(_) => {
             return Err(ValidationResult {
                 body: BAD_PAYLOAD_ERROR,
-                status: http_status::BAD_REQUEST,
+                status: StatusCode::BAD_REQUEST,
             });
         }
     };
@@ -39,32 +41,35 @@ fn validate_payload<'a>(body: &str, config: &Config) -> Result<(), ValidationRes
     if is_older_than_fifteen_seconds(payload.timestamp) {
         return Err(ValidationResult {
             body: PAYLOAD_TOO_OLD_ERROR,
-            status: http_status::UNAUTHORIZED,
+            status: StatusCode::UNAUTHORIZED,
         });
     };
 
     if config.endpoint != payload.endpoint {
         return Err(ValidationResult {
             body: BAD_ENDPOINT_ERROR,
-            status: http_status::FORBIDDEN,
+            status: StatusCode::FORBIDDEN,
         });
     };
 
-    Ok(())
+    Ok(ValidationResult {
+        body: OK,
+        status: StatusCode::OK,
+    })
 }
 
 fn validate_signature<'a>(
     body: &str,
     signature: &str,
     key: &RSAPublicKey,
-) -> Result<(), ValidationResult<'a>> {
+) -> Result<ValidationResult<'a>, ValidationResult<'a>> {
     let decoded_signature = match base64::decode(signature) {
         Ok(sig) => sig,
         Err(_) => {
             return Err(ValidationResult {
                 body: INVALID_SIGNATURE_ERROR,
-                status: http_status::BAD_REQUEST,
-            });
+                status: StatusCode::BAD_REQUEST,
+            })
         }
     };
 
@@ -72,23 +77,23 @@ fn validate_signature<'a>(
     hasher.update(body);
     let hashed = hasher.finalize();
 
-    match key.verify(
+    if let Err(_) = key.verify(
         PaddingScheme::PKCS1v15Sign {
             hash: Some(hash::Hash::SHA2_256),
         },
         hashed.as_slice(),
         &decoded_signature,
     ) {
-        Ok(_) => (),
-        Err(_) => {
-            return Err(ValidationResult {
-                body: INVALID_SIGNATURE_ERROR,
-                status: http_status::BAD_REQUEST,
-            });
-        }
-    };
+        return Err(ValidationResult {
+            body: INVALID_SIGNATURE_ERROR,
+            status: StatusCode::BAD_REQUEST,
+        })
+    }
 
-    Ok(())
+    Ok(ValidationResult {
+        body: OK,
+        status: StatusCode::OK,
+    })
 }
 
 #[cfg(test)]
@@ -149,7 +154,7 @@ mod tests {
             },
         );
 
-        assert!(result.is_err())
+        assert!(result.is_err());
     }
 
     #[test]
@@ -167,7 +172,7 @@ mod tests {
             },
         );
 
-        assert!(result.is_err())
+        assert!(result.is_err());
     }
 
     #[test]

@@ -8,5 +8,14 @@ edition = "2018"
 
 [dependencies]
 constants = { path = "../static/constants" }
+types = { path = "../static/types" }
+git_updater = { path = "../functionality/git_updater" }
+logger = { path = "../functionality/logger" }
+http_event_handler = { path = "../event_handlers/http_event_handler" }
+stdio_event_handler = { path = "../event_handlers/stdio_event_handler" }
 
 rsa = "0.4.0"
+serde_json = "1.0.64"
+clap = "2.33.3"
+tokio = "1.4.0"
+anyhow = "1.0.40"

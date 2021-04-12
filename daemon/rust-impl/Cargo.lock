@@ -10,6 +10,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "ansi_term"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee49baf6cb617b853aa8d93bf420db2383fab46d314482ca2803b40d5fde979b"
+dependencies = [
+ "winapi",
+]
+
+[[package]]
+name = "anyhow"
+version = "1.0.40"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28b2cd92db5cbd74e8e5028f7e27dd7aa3090e89e4f2a197cc7c8dfb69c7063b"
+
+[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -128,11 +143,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "clap"
+version = "2.33.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37e58ac78573c40708d45522f0d80fa2f01cc4f9b4e2bf749807255454312002"
+dependencies = [
+ "ansi_term",
+ "atty",
+ "bitflags",
+ "strsim",
+ "textwrap",
+ "unicode-width",
+ "vec_map",
+]
+
+[[package]]
 name = "cli"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "clap",
  "constants",
+ "git_updater",
+ "http_event_handler",
+ "logger",
  "rsa",
+ "serde_json",
+ "stdio_event_handler",
+ "tokio",
+ "types",
 ]
 
 [[package]]
@@ -331,6 +370,7 @@ dependencies = [
 name = "git_updater"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "constants",
  "logger",
 ]
@@ -420,6 +460,7 @@ dependencies = [
 name = "http_event_handler"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "base64",
  "constants",
  "lazy_static",
@@ -1227,10 +1268,12 @@ dependencies = [
 name = "signature_verifier"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "base64",
  "binary_macros",
  "constants",
  "rand 0.8.3",
+ "reqwest",
  "rsa",
  "serde",
  "serde_json",
@@ -1282,14 +1325,22 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 name = "stdio_event_handler"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "constants",
  "logger",
  "regex",
  "rsa",
+ "serde",
  "serde_json",
  "signature_verifier",
  "types",
 ]
+
+[[package]]
+name = "strsim"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
 
 [[package]]
 name = "subtle"
@@ -1332,6 +1383,15 @@ dependencies = [
  "redox_syscall",
  "remove_dir_all",
  "winapi",
+]
+
+[[package]]
+name = "textwrap"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d326610f408c7a4eb6f51c37c330e496b08506c9457c9d34287ecc38809fb060"
+dependencies = [
+ "unicode-width",
 ]
 
 [[package]]
@@ -1529,6 +1589,7 @@ checksum = "879f6906492a7cd215bfa4cf595b600146ccfac0c79bcbd1f3000162af5e8b06"
 name = "types"
 version = "0.1.0"
 dependencies = [
+ "reqwest",
  "serde",
 ]
 
@@ -1560,6 +1621,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "unicode-width"
+version = "0.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9337591893a19b88d8d87f2cec1e73fad5cdfd10e5a6f349f498ad6ea2ffb1e3"
+
+[[package]]
 name = "unicode-xid"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1588,6 +1655,12 @@ name = "vcpkg"
 version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b00bca6106a5e23f3eee943593759b7fcddb00554332e856d990c893966879fb"
+
+[[package]]
+name = "vec_map"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1bddf1187be692e79c5ffeab891132dfb0f236ed36a43c7ed39f1165ee20191"
 
 [[package]]
 name = "version_check"
