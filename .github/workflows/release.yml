@@ -10,9 +10,7 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./daemon/rust-impl
+    
     steps:
     - uses: actions/checkout@v2
     
@@ -23,17 +21,19 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: build
-        args: --release
+        args: --release --manifest-path ./daemon/rust-impl
     
     - name: Test
       uses: actions-rs/cargo@v1
       with:
         command: test
+        args: --manifest-path ./daemon/rust-impl
       
     - name: Lint
       uses: actions-rs/clippy-check@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        args: --manifest-path ./daemon/rust-impl
 
     - name: Release
       uses: marvinpinto/action-automatic-releases@v1.1.1
