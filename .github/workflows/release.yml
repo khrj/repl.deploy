@@ -21,19 +21,19 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: build
-        args: --release --manifest-path ./daemon/rust-impl
+        args: --release --manifest-path ./daemon/rust-impl/Cargo.toml
     
     - name: Test
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --manifest-path ./daemon/rust-impl
+        args: --manifest-path ./daemon/rust-impl/Cargo.toml
       
     - name: Lint
       uses: actions-rs/clippy-check@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        args: --manifest-path ./daemon/rust-impl
+        args: --manifest-path ./daemon/rust-impl/Cargo.toml
 
     - name: Release
       uses: marvinpinto/action-automatic-releases@v1.1.1
@@ -43,4 +43,4 @@ jobs:
         prerelease: true
         title: "Development Build"
         files: |
-          target/release/repl-mc
+          target/release/repl.deploy
