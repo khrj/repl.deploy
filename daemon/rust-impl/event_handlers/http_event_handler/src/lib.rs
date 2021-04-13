@@ -51,7 +51,6 @@ pub async fn listen<S: Send + Sync + Clone + 'static>(
             ) {
                 Ok(res) => {
                     logger::success(STAT_SIGNATURE_VALIDATION_SUCCESS);
-                    // let mut handler = handler.lock().unwrap();
 
                     match handler(state) {
                         Ok(()) => reply::with_status(Cow::from(res.body), StatusCode::OK),
