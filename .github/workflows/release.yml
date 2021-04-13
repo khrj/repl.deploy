@@ -1,4 +1,4 @@
-name: Rust
+name: Release
 
 on:
   push:
@@ -8,8 +8,11 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./daemon
     steps:
     - uses: actions/checkout@v2
     
