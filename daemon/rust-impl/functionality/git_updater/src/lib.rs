@@ -40,6 +40,10 @@ mod tests {
     }
 
     fn prepare_repos() {
-        Command::new("./test_prep.sh").output().expect("Failed to prepare repos");
+        Command::new("./test_prep.sh")
+            .spawn()
+            .expect("Failed to spawn test_prep script")
+            .wait()
+            .expect("Failed to prepare repos");
     }
 }

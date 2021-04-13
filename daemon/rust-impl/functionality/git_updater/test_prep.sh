@@ -14,3 +14,10 @@ printf "hi" > temp
 git add temp
 git commit -m test_commit
 git branch -m main
+
+# Debug info
+
+ls ..
+ls ../test_repo1
+ls ../test_repo2
+(cd ../test_repo2 && git status)
