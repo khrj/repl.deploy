@@ -1,7 +1,7 @@
 // Strings
 pub const REPLIT_DEPLOY_JSON_PATH: &str = "./replit-deploy.json";
 pub const SIGNATURE_HEADER_NAME: &str = "Signature";
-pub const STDIN_REGEX: &str = r"repl\.deploy({.*})(.*)";
+pub const STDIN_REGEX: &str = r"repl\.deploy(\{.*})(.*)";
 pub const STDIN_SUCCESS: &str = "repl.deploy-success";
 pub const STDIN_RESPONDED_SUCCESSFULLY: &str = "Responded successfully";
 pub const OK: &str = "OK";

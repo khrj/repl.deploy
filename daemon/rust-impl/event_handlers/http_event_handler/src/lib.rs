@@ -54,21 +54,18 @@ pub async fn listen<S: Send + Sync + Clone + 'static>(
                     // let mut handler = handler.lock().unwrap();
 
                     match handler(state) {
-                        Ok(()) => return reply::with_status(Cow::from(res.body), StatusCode::OK),
+                        Ok(()) => reply::with_status(Cow::from(res.body), StatusCode::OK),
                         Err(e) => {
                             let e = e.to_string();
                             logger::error(&e);
 
-                            return reply::with_status(
-                                Cow::from(e),
-                                StatusCode::INTERNAL_SERVER_ERROR,
-                            );
+                            reply::with_status(Cow::from(e), StatusCode::INTERNAL_SERVER_ERROR)
                         }
                     }
                 }
                 Err(e) => {
                     logger::warn(STAT_SIGNATURE_VALIDATION_FAILED);
-                    return reply::with_status(Cow::from(e.body), e.status);
+                    reply::with_status(Cow::from(e.body), e.status)
                 }
             }
         });

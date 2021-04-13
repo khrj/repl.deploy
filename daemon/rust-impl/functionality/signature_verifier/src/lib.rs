@@ -77,17 +77,20 @@ fn validate_signature<'a>(
     hasher.update(body);
     let hashed = hasher.finalize();
 
-    if let Err(_) = key.verify(
-        PaddingScheme::PKCS1v15Sign {
-            hash: Some(hash::Hash::SHA2_256),
-        },
-        hashed.as_slice(),
-        &decoded_signature,
-    ) {
+    if key
+        .verify(
+            PaddingScheme::PKCS1v15Sign {
+                hash: Some(hash::Hash::SHA2_256),
+            },
+            hashed.as_slice(),
+            &decoded_signature,
+        )
+        .is_err()
+    {
         return Err(ValidationResult {
             body: INVALID_SIGNATURE_ERROR,
             status: StatusCode::BAD_REQUEST,
-        })
+        });
     }
 
     Ok(ValidationResult {

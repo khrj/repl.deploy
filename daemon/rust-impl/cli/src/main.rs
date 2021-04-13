@@ -33,9 +33,9 @@ async fn main() {
         .get_matches();
 
     let event_handler = if matches.is_present("standalone") {
-        lib::EventHandler::HTTP
+        lib::EventHandler::Http
     } else {
-        lib::EventHandler::STDIO
+        lib::EventHandler::Stdio
     };
 
     let mut cmd_and_args = matches.values_of("command").unwrap();
@@ -49,8 +49,8 @@ async fn main() {
     println!(
         "Event handler: {:#?}",
         match event_handler {
-            lib::EventHandler::HTTP => "HTTP",
-            lib::EventHandler::STDIO => "STDIO",
+            lib::EventHandler::Http => "HTTP",
+            lib::EventHandler::Stdio => "STDIO",
         }
     );
 

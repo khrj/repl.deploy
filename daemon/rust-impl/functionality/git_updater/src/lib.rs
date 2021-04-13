@@ -7,7 +7,7 @@ use {
 pub fn update_git_from_remote() -> Result<()> {
     let git_fetch = Command::new("git").args(&["fetch", "--all"]).output();
 
-    if let Err(_) = git_fetch {
+    if git_fetch.is_err() {
         bail!(GIT_FETCH_FAILED_ERROR);
     }
 
@@ -15,7 +15,7 @@ pub fn update_git_from_remote() -> Result<()> {
         .args(&["reset", "--hard", "origin/main"])
         .output();
 
-    if let Err(_) = git_reset {
+    if git_reset.is_err() {
         bail!(GIT_RESET_FAILED_ERROR);
     }
 

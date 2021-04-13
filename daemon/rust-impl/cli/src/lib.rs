@@ -52,8 +52,8 @@ yggLIsW8CUnOIhj0AKovh9OvyC//N/GRLQIDAQAB
 const REPL_DEPLOY_PUBLIC_KEY: &[u8; 1038] = include_bytes!("../../static/public_key.bin");
 
 pub enum EventHandler {
-    HTTP,
-    STDIO,
+    Http,
+    Stdio,
 }
 
 pub async fn listen(event_handler: EventHandler, cmd: String, cmd_args: Vec<String>) {
@@ -80,17 +80,12 @@ pub async fn listen(event_handler: EventHandler, cmd: String, cmd_args: Vec<Stri
     }
 
     match event_handler {
-        EventHandler::HTTP => listen_http(repl_deploy_public_key, config, cmd, cmd_args).await,
-        EventHandler::STDIO => listen_stdio(repl_deploy_public_key, config, cmd, cmd_args),
+        EventHandler::Http => listen_http(repl_deploy_public_key, config, cmd, cmd_args).await,
+        EventHandler::Stdio => listen_stdio(repl_deploy_public_key, config, cmd, cmd_args),
     }
 }
 
-async fn listen_http(
-    pub_key: RSAPublicKey,
-    config: Config,
-    cmd: String,
-    cmd_args: Vec<String>
-) {
+async fn listen_http(pub_key: RSAPublicKey, config: Config, cmd: String, cmd_args: Vec<String>) {
     let child = match Command::new(&cmd).args(&cmd_args).spawn() {
         Ok(child_handle) => child_handle,
         Err(_) => {
@@ -104,17 +99,17 @@ async fn listen_http(
         Arc::new(Mutex::new(child)),
         move |child| -> Result<()> {
             let mut c = child.lock().unwrap();
-            let cmd_args: Vec<_> = cmd_args.iter().map(|s| s.as_str()).collect(); 
-            match update_and_restart_process(&mut c, &cmd, &cmd_args, EventHandler::HTTP) {
+            let cmd_args: Vec<_> = cmd_args.iter().map(|s| s.as_str()).collect();
+            match update_and_restart_process(&mut c, &cmd, &cmd_args, EventHandler::Http) {
                 Ok(new_handle) => {
                     *c = new_handle;
-                    return Ok(());
+                    Ok(())
                 }
                 Err(e) => {
                     logger::error(&e.to_string());
                     bail!(e);
                 }
-            };
+            }
         },
     )
     .await
@@ -138,24 +133,24 @@ fn listen_stdio(pub_key: RSAPublicKey, config: Config, cmd: String, cmd_args: Ve
 
     stdio_event_handler::listen(&pub_key, &config, child.clone(), &mut move || {
         let child_ref = child.clone();
-        let cmd_args: Vec<_> = cmd_args.iter().map(|s| s.as_str()).collect(); 
+        let cmd_args: Vec<_> = cmd_args.iter().map(|s| s.as_str()).collect();
         let result = update_and_restart_process(
             &mut *child_ref.borrow_mut(),
             &cmd,
             &cmd_args,
-            EventHandler::STDIO,
+            EventHandler::Stdio,
         );
 
         match result {
             Ok(new_handle) => {
                 child = Rc::new(RefCell::new(new_handle));
-                return Ok(child.clone());
+                Ok(child.clone())
             }
             Err(e) => {
                 logger::error(&e.to_string());
                 bail!(e);
             }
-        };
+        }
     })
 }
 
@@ -172,8 +167,8 @@ fn update_and_restart_process(
         .with_context(|| FAILED_TO_KILL_CHILD_PROCESS_ERROR)?;
 
     let child = match event_handler {
-        EventHandler::HTTP => Command::new(cmd).args(cmd_args).spawn(),
-        EventHandler::STDIO => Command::new(cmd)
+        EventHandler::Http => Command::new(cmd).args(cmd_args).spawn(),
+        EventHandler::Stdio => Command::new(cmd)
             .args(cmd_args)
             .stdout(Stdio::piped())
             .stdin(Stdio::piped())
@@ -183,7 +178,7 @@ fn update_and_restart_process(
     match child {
         Ok(child_handle) => {
             logger::success(STAT_PROGRAM_STARTED);
-            return Ok(child_handle);
+            Ok(child_handle)
         }
         Err(_) => bail!(FAILED_TO_START_CHILD_PROCESS_ERROR),
     }
