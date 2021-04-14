@@ -23,11 +23,11 @@ jobs:
         command: build
         args: --release --manifest-path ./daemon/rust-impl/Cargo.toml
     
-    - name: Test
-      uses: actions-rs/cargo@v1
-      with:
-        command: test
-        args: --manifest-path ./daemon/rust-impl/Cargo.toml
+    # - name: Test
+    #   uses: actions-rs/cargo@v1
+    #   with:
+    #     command: test
+    #     args: --manifest-path ./daemon/rust-impl/Cargo.toml
       
     - name: Lint
       uses: actions-rs/clippy-check@v1
