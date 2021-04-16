@@ -10,18 +10,23 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./daemon/rust-impl
     
     steps:
     - uses: actions/checkout@v2
     
     - name: Cache
       uses: Swatinem/rust-cache@v1.2.0
+      with: 
+        working-directory: ./daemon/rust-impl
 
     - name: Build
-      run: cargo build --release --manifest-path ./daemon/rust-impl/Cargo.toml
+      run: cargo build --release
 
     - name: Test
-      run: cargo test --manifest-path ./daemon/rust-impl/Cargo.toml
+      run: cargo test
 
     - name: Lint
       uses: actions-rs/clippy-check@v1
@@ -37,4 +42,4 @@ jobs:
         prerelease: true
         title: "Development Build"
         files: |
-          target/release/repl.deploy
+          daemon/rust-impl/target/release/repl.deploy
