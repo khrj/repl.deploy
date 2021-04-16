@@ -17,16 +17,47 @@ pub async fn listen<S: Send + Sync + Clone + 'static>(
     state: S,
     handler: impl Fn(S) -> Result<()> + Clone + Send + Sync + 'static,
 ) {
-    let refresher = warp::post()
-        .and(warp::path("refresh"))
-        .and(warp::body::bytes())
-        .and(warp::header("Signature"))
-        .map(
-            move |payload: warp::hyper::body::Bytes, signature: String| {
-                let config = config_ref.clone();
-                let public_key = public_key_ref.clone();
-                let state = state.clone();
+    let refresher = refresher(config_ref, public_key_ref, state, handler);
+    warp::serve(refresher).run(([127, 0, 0, 1], 8090)).await;
+}
 
+fn refresher<S: Send + Sync + Clone + 'static>(
+    config_ref: Arc<Config>,
+    public_key_ref: Arc<RSAPublicKey>,
+    state: S,
+    handler: impl Fn(S) -> Result<()> + Clone + Send + Sync + 'static,
+) -> impl Filter<Extract = (reply::WithStatus<Cow<'static, str>>,), Error = warp::Rejection> + Clone
+{
+    warp::post()
+        .and(warp::path("refresh"))
+        .and(validate_payload_and_signature(config_ref, public_key_ref))
+        .map(move |res: types::ValidationResult| {
+            logger::success(STAT_SIGNATURE_VALIDATION_SUCCESS);
+
+            let state = state.clone();
+            let body = res.body;
+            match handler(state) {
+                Ok(()) => reply::with_status(Cow::from(body), StatusCode::OK),
+                Err(e) => {
+                    let e = e.to_string();
+                    logger::error(&e);
+
+                    reply::with_status(Cow::from(e), StatusCode::INTERNAL_SERVER_ERROR)
+                }
+            }
+        })
+}
+
+fn validate_payload_and_signature(
+    config_ref: Arc<Config>,
+    public_key_ref: Arc<RSAPublicKey>,
+) -> impl Filter<Extract = (types::ValidationResult,), Error = warp::Rejection> + Clone {
+    warp::body::bytes().and(warp::header("Signature")).and_then(
+        move |payload: warp::hyper::body::Bytes, signature: String| {
+            let config = config_ref.clone();
+            let public_key = public_key_ref.clone();
+
+            async move {
                 logger::info(STAT_REQUEST_RECEIVED);
 
                 match signature_verifier::validate_payload_and_signature(
@@ -35,28 +66,15 @@ pub async fn listen<S: Send + Sync + Clone + 'static>(
                     &config,
                     &public_key,
                 ) {
-                    Ok(res) => {
-                        logger::success(STAT_SIGNATURE_VALIDATION_SUCCESS);
-
-                        match handler(state) {
-                            Ok(()) => reply::with_status(Cow::from(res.body), StatusCode::OK),
-                            Err(e) => {
-                                let e = e.to_string();
-                                logger::error(&e);
-
-                                reply::with_status(Cow::from(e), StatusCode::INTERNAL_SERVER_ERROR)
-                            }
-                        }
-                    }
+                    Ok(res) => Ok(res),
                     Err(e) => {
                         logger::warn(STAT_SIGNATURE_VALIDATION_FAILED);
-                        reply::with_status(Cow::from(e.body), e.status)
+                        Err(warp::reject::custom(e))
                     }
                 }
-            },
-        );
-
-    warp::serve(refresher).run(([127, 0, 0, 1], 8090)).await;
+            }
+        },
+    )
 }
 
 #[cfg(test)]
