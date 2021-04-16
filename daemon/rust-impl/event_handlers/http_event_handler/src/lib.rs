@@ -1,8 +1,7 @@
 use {
     anyhow::Result,
     constants::{
-        BODY_NOT_STRING_ERROR, STAT_REQUEST_RECEIVED, STAT_SIGNATURE_VALIDATION_FAILED,
-        STAT_SIGNATURE_VALIDATION_SUCCESS,
+        STAT_REQUEST_RECEIVED, STAT_SIGNATURE_VALIDATION_FAILED, STAT_SIGNATURE_VALIDATION_SUCCESS,
     },
     logger,
     rsa::RSAPublicKey,
@@ -18,56 +17,44 @@ pub async fn listen<S: Send + Sync + Clone + 'static>(
     state: S,
     handler: impl Fn(S) -> Result<()> + Clone + Send + Sync + 'static,
 ) {
-    let config_ref = config_ref.clone();
-    let public_key_ref = public_key_ref.clone();
-    // let state = state.clone();
     let refresher = warp::post()
         .and(warp::path("refresh"))
         .and(warp::body::bytes())
         .and(warp::header("Signature"))
-        .map(move |buf: warp::hyper::body::Bytes, signature: String| {
-            let config = config_ref.clone();
-            let public_key = public_key_ref.clone();
-            let state = state.clone();
-            // let handler = handler_ref.clone();
+        .map(
+            move |payload: warp::hyper::body::Bytes, signature: String| {
+                let config = config_ref.clone();
+                let public_key = public_key_ref.clone();
+                let state = state.clone();
 
-            let payload = match String::from_utf8(buf.to_vec()) {
-                Ok(s) => s,
-                Err(_) => {
-                    return reply::with_status(
-                        Cow::from(BODY_NOT_STRING_ERROR),
-                        StatusCode::BAD_REQUEST,
-                    );
-                }
-            };
+                logger::info(STAT_REQUEST_RECEIVED);
 
-            logger::info(STAT_REQUEST_RECEIVED);
+                match signature_verifier::validate_payload_and_signature(
+                    &payload.to_vec(),
+                    &signature,
+                    &config,
+                    &public_key,
+                ) {
+                    Ok(res) => {
+                        logger::success(STAT_SIGNATURE_VALIDATION_SUCCESS);
 
-            match signature_verifier::validate_payload_and_signature(
-                &payload,
-                &signature,
-                &config,
-                &public_key,
-            ) {
-                Ok(res) => {
-                    logger::success(STAT_SIGNATURE_VALIDATION_SUCCESS);
+                        match handler(state) {
+                            Ok(()) => reply::with_status(Cow::from(res.body), StatusCode::OK),
+                            Err(e) => {
+                                let e = e.to_string();
+                                logger::error(&e);
 
-                    match handler(state) {
-                        Ok(()) => reply::with_status(Cow::from(res.body), StatusCode::OK),
-                        Err(e) => {
-                            let e = e.to_string();
-                            logger::error(&e);
-
-                            reply::with_status(Cow::from(e), StatusCode::INTERNAL_SERVER_ERROR)
+                                reply::with_status(Cow::from(e), StatusCode::INTERNAL_SERVER_ERROR)
+                            }
                         }
                     }
+                    Err(e) => {
+                        logger::warn(STAT_SIGNATURE_VALIDATION_FAILED);
+                        reply::with_status(Cow::from(e.body), e.status)
+                    }
                 }
-                Err(e) => {
-                    logger::warn(STAT_SIGNATURE_VALIDATION_FAILED);
-                    reply::with_status(Cow::from(e.body), e.status)
-                }
-            }
-        });
+            },
+        );
 
     warp::serve(refresher).run(([127, 0, 0, 1], 8090)).await;
 }

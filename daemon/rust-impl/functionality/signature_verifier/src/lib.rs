@@ -15,7 +15,7 @@ use {
 };
 
 pub fn validate_payload_and_signature<'a>(
-    payload: &str,
+    payload: &[u8],
     signature: &str,
     config: &Config,
     public_key: &RSAPublicKey,
@@ -25,10 +25,10 @@ pub fn validate_payload_and_signature<'a>(
 }
 
 fn validate_payload<'a>(
-    body: &str,
+    body: &[u8],
     config: &Config,
 ) -> Result<ValidationResult<'a>, ValidationResult<'a>> {
-    let payload: Payload = match serde_json::from_str(body) {
+    let payload: Payload = match serde_json::from_slice(body) {
         Ok(payload) => payload,
         Err(_) => {
             return Err(ValidationResult {
@@ -59,7 +59,7 @@ fn validate_payload<'a>(
 }
 
 fn validate_signature<'a>(
-    body: &str,
+    body: &[u8],
     signature: &str,
     key: &RSAPublicKey,
 ) -> Result<ValidationResult<'a>, ValidationResult<'a>> {
@@ -112,7 +112,7 @@ mod tests {
 
     #[test]
     fn correct_payload() {
-        let correct_payload = serde_json::to_string(&Payload {
+        let correct_payload = serde_json::to_vec(&Payload {
             timestamp: now_ms(),
             endpoint: TEST_ENDPOINT.to_owned(),
         })
@@ -130,10 +130,10 @@ mod tests {
 
     #[test]
     fn invalid_json_payload() {
-        let invalid_json_payload = TEST_ENDPOINT;
+        let invalid_json_payload = TEST_ENDPOINT.as_bytes();
 
         let result = validate_payload(
-            &invalid_json_payload,
+            invalid_json_payload,
             &Config {
                 endpoint: TEST_ENDPOINT.to_owned(),
             },
@@ -144,7 +144,7 @@ mod tests {
 
     #[test]
     fn old_payload() {
-        let old_payload = serde_json::to_string(&Payload {
+        let old_payload = serde_json::to_vec(&Payload {
             timestamp: now_ms() - 20000,
             endpoint: TEST_ENDPOINT.to_owned(),
         })
@@ -162,7 +162,7 @@ mod tests {
 
     #[test]
     fn config_mismatch_payload() {
-        let mismatch_payload = serde_json::to_string(&Payload {
+        let mismatch_payload = serde_json::to_vec(&Payload {
             timestamp: now_ms(),
             endpoint: TEST_ENDPOINT.to_owned(),
         })
@@ -180,7 +180,7 @@ mod tests {
 
     #[test]
     fn correct_signature() {
-        const SAMPLE_BODY: &str = "signature-body-test";
+        const SAMPLE_BODY: &[u8] = "signature-body-test".as_bytes();
         let (pub_key, priv_key) = new_keypair();
         let signature = sign_and_hash(SAMPLE_BODY, &priv_key);
         let result = validate_signature(SAMPLE_BODY, &signature, &pub_key);
@@ -189,7 +189,7 @@ mod tests {
 
     #[test]
     fn incorrect_signature() {
-        const SAMPLE_BODY: &str = "signature-body-test";
+        const SAMPLE_BODY: &[u8] = "signature-body-test".as_bytes();
         const SIGNATURE: &str = "hi";
         let (pub_key, _) = new_keypair();
         let result = validate_signature(SAMPLE_BODY, SIGNATURE, &pub_key);
@@ -198,7 +198,7 @@ mod tests {
 
     #[test]
     fn verify_payload_and_signature() {
-        let payload = serde_json::to_string(&Payload {
+        let payload = serde_json::to_vec(&Payload {
             timestamp: now_ms(),
             endpoint: TEST_ENDPOINT.to_owned(),
         })
@@ -231,7 +231,7 @@ mod tests {
         (public_key, private_key)
     }
 
-    fn sign_and_hash(body: &str, priv_key: &RSAPrivateKey) -> String {
+    fn sign_and_hash(body: &[u8], priv_key: &RSAPrivateKey) -> String {
         base64::encode(
             priv_key
                 .sign(
@@ -251,7 +251,7 @@ mod tests {
             .as_millis()
     }
 
-    fn hash(body: &str) -> Vec<u8> {
+    fn hash(body: &[u8]) -> Vec<u8> {
         let mut hasher = Sha256::new();
         hasher.update(body);
         Vec::from(hasher.finalize().as_slice())

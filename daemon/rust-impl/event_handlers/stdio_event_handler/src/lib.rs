@@ -99,16 +99,16 @@ fn write_response(response: &[u8], writer: &mut std::process::ChildStdin) {
     };
 }
 
-fn get_matches<'a>(line: &'a str, stdin_regex: &Regex) -> Option<(&'a str, &'a str)> {
+fn get_matches<'a>(line: &'a str, stdin_regex: &Regex) -> Option<(&'a [u8], &'a str)> {
     let matches = stdin_regex.captures(line)?;
-    let payload = matches.get(1)?.as_str();
+    let payload = matches.get(1)?.as_str().as_bytes();
     let signature = matches.get(2)?.as_str();
 
     Some((payload, signature))
 }
 
 fn validate_and_return_response(
-    payload: &str,
+    payload: &[u8],
     input_signature: &str,
     config: &Config,
     public_key: &RSAPublicKey,

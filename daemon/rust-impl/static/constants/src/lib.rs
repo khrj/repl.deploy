@@ -22,7 +22,6 @@ pub const FAILED_TO_KILL_CHILD_PROCESS_ERROR: &str = "Failed to kill child proce
 pub const PROBLEMS_SERIALIZING_JSON_ERROR: &str = "Problems serializing JSON";
 pub const PROBLEMS_WRITING_TO_STDIN_OF_SUBPROCESS_ERROR: &str =
     "Problems writing to stdin of subprocess";
-pub const BODY_NOT_STRING_ERROR: &str = "Body is not a UTF8 string";
 
 // Warnings
 pub const SIGNATURE_VALIDATION_FAILED_WARN: &str =
