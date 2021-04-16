@@ -93,6 +93,7 @@ async fn listen_http(pub_key: RSAPublicKey, config: Config, cmd: String, cmd_arg
             return;
         }
     };
+
     http_event_handler::listen(
         Arc::new(config),
         Arc::new(pub_key),

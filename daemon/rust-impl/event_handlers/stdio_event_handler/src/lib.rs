@@ -112,7 +112,7 @@ fn validate_and_return_response(
     input_signature: &str,
     config: &Config,
     public_key: &RSAPublicKey,
-) -> ValidationResult<'static> {
+) -> ValidationResult {
     match signature_verifier::validate_payload_and_signature(
         payload,
         input_signature,

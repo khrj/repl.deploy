@@ -1,6 +1,7 @@
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use warp::reject::Reject;
 
 #[derive(Serialize, Deserialize)]
 pub struct Payload {
@@ -14,12 +15,14 @@ pub struct Config {
 }
 
 #[derive(Debug)]
-pub struct ValidationResult<'a> {
-    pub body: &'a str,
+pub struct ValidationResult {
+    pub body: &'static str,
     pub status: StatusCode,
 }
 
-impl<'a> fmt::Display for ValidationResult<'a> {
+impl Reject for ValidationResult {}
+
+impl fmt::Display for ValidationResult {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{} {}", self.body, self.status)
     }

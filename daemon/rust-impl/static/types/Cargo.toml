@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 reqwest = "0.11.2"
 serde = { version = "1.0.125", features = ["derive"] }
+warp = "0.3.1"

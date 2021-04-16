@@ -14,12 +14,12 @@ use {
     types::{Config, Payload, ValidationResult},
 };
 
-pub fn validate_payload_and_signature<'a>(
+pub fn validate_payload_and_signature(
     payload: &[u8],
     signature: &str,
     config: &Config,
     public_key: &RSAPublicKey,
-) -> Result<ValidationResult<'a>, ValidationResult<'a>> {
+) -> Result<ValidationResult, ValidationResult> {
     validate_payload(&payload, &config)?;
     validate_signature(&payload, &signature, &public_key)
 }
@@ -27,7 +27,7 @@ pub fn validate_payload_and_signature<'a>(
 fn validate_payload<'a>(
     body: &[u8],
     config: &Config,
-) -> Result<ValidationResult<'a>, ValidationResult<'a>> {
+) -> Result<ValidationResult, ValidationResult> {
     let payload: Payload = match serde_json::from_slice(body) {
         Ok(payload) => payload,
         Err(_) => {
@@ -58,11 +58,11 @@ fn validate_payload<'a>(
     })
 }
 
-fn validate_signature<'a>(
+fn validate_signature(
     body: &[u8],
     signature: &str,
     key: &RSAPublicKey,
-) -> Result<ValidationResult<'a>, ValidationResult<'a>> {
+) -> Result<ValidationResult, ValidationResult> {
     let decoded_signature = match base64::decode(signature) {
         Ok(sig) => sig,
         Err(_) => {
