@@ -35,7 +35,7 @@ jobs:
         args: --manifest-path ./daemon/rust-impl/Cargo.toml
         
     - name: Rename
-      run: target/release/cli target/release/repl.deploy
+      run: mv target/release/cli target/release/repl.deploy
 
     - name: Release
       uses: marvinpinto/action-automatic-releases@v1.1.1
