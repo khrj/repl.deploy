@@ -216,7 +216,7 @@ mod tests {
             &pub_key,
         );
 
-        assert!(result.is_ok());
+        assert!(result.is_ok(), "{:#}", result.unwrap_err());
     }
 
     // Helpers
