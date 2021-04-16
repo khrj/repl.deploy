@@ -2,12 +2,13 @@ use {
     anyhow::Result,
     constants::{
         STAT_REQUEST_RECEIVED, STAT_SIGNATURE_VALIDATION_FAILED, STAT_SIGNATURE_VALIDATION_SUCCESS,
+        UNKNOWN_ERROR_WHILE_PROCESSING_REQUEST,
     },
     logger,
     rsa::RSAPublicKey,
     signature_verifier,
-    std::{borrow::Cow, sync::Arc},
-    types::Config,
+    std::{borrow::Cow, convert::Infallible, sync::Arc},
+    types::{Config, ValidationResult},
     warp::{http::StatusCode, reply, Filter},
 };
 
@@ -17,7 +18,8 @@ pub async fn listen<S: Send + Sync + Clone + 'static>(
     state: S,
     handler: impl Fn(S) -> Result<()> + Clone + Send + Sync + 'static,
 ) {
-    let refresher = refresher(config_ref, public_key_ref, state, handler);
+    let refresher = refresher(config_ref, public_key_ref, state, handler).recover(handle_rejection);
+
     warp::serve(refresher).run(([127, 0, 0, 1], 8090)).await;
 }
 
@@ -77,16 +79,28 @@ fn validate_payload_and_signature(
     )
 }
 
+async fn handle_rejection(err: warp::Rejection) -> Result<impl warp::Reply, Infallible> {
+    if let Some(res) = err.find::<ValidationResult>() {
+        Ok(reply::with_status(res.body, res.status))
+    } else {
+        logger::error(UNKNOWN_ERROR_WHILE_PROCESSING_REQUEST); // TODO LOG ERROR
+        Ok(reply::with_status(
+            UNKNOWN_ERROR_WHILE_PROCESSING_REQUEST,
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use {
         super::*,
-        reqwest::StatusCode,
         rsa::{hash::Hash, PaddingScheme, RSAPrivateKey},
         serde_json,
         sha2::{Digest, Sha256},
         std::time::{SystemTime, UNIX_EPOCH},
         types::Payload,
+        warp::Reply,
     };
 
     #[tokio::test]
@@ -94,13 +108,12 @@ mod tests {
         const TEST_ENDPOINT: &str = "https://endpoint.example.com/";
         let (pub_key, priv_key) = new_keypair();
 
-        tokio::spawn(run_server(TEST_ENDPOINT.to_owned(), pub_key));
-        let request_thread = tokio::spawn(make_request(TEST_ENDPOINT.to_owned(), priv_key));
-        assert_eq!(
-            request_thread.await.expect("HTTP request failed").status(),
-            StatusCode::OK,
-            "Response not OK"
-        );
+        let filter = get_filter(TEST_ENDPOINT, pub_key);
+        let status = make_request(TEST_ENDPOINT, priv_key, filter)
+            .await
+            .expect("Failed to apply filter on request");
+
+        assert_eq!(status, StatusCode::OK, "Response not OK");
     }
 
     #[tokio::test]
@@ -109,43 +122,53 @@ mod tests {
         const BAD_ENDPOINT: &str = "https://endpoint.bad-example.com/";
         let (pub_key, priv_key) = new_keypair();
 
-        tokio::spawn(run_server(TEST_ENDPOINT.to_owned(), pub_key));
-        let request_thread = tokio::spawn(make_request(BAD_ENDPOINT.to_owned(), priv_key));
+        let filter = get_filter(TEST_ENDPOINT, pub_key);
+        let status = make_request(BAD_ENDPOINT, priv_key, filter).await;
 
-        assert_ne!(
-            request_thread.await.expect("HTTP request failed").status(),
-            StatusCode::OK,
-            "Response is OK"
-        );
+        assert!(status.is_err(), "Response is OK");
     }
 
-    async fn run_server(endpoint: String, pub_key: RSAPublicKey) {
-        listen(
-            Arc::new(Config { endpoint }),
+    fn get_filter(
+        endpoint: &str,
+        pub_key: RSAPublicKey,
+    ) -> impl Filter<Extract = (reply::WithStatus<Cow<'static, str>>,), Error = warp::Rejection> + Clone
+    {
+        refresher(
+            Arc::new(Config {
+                endpoint: endpoint.to_owned(),
+            }),
             Arc::new(pub_key),
             (),
             move |_| Ok(()),
         )
-        .await;
     }
 
-    async fn make_request(endpoint: String, priv_key: RSAPrivateKey) -> reqwest::Response {
+    async fn make_request(
+        endpoint: &str,
+        priv_key: RSAPrivateKey,
+        filter: impl Filter<Extract = (reply::WithStatus<Cow<'static, str>>,), Error = warp::Rejection>
+            + Clone
+            + 'static,
+    ) -> Result<StatusCode, ()> {
         let payload = serde_json::to_string(&Payload {
             timestamp: now_ms(),
-            endpoint,
+            endpoint: endpoint.to_owned(),
         })
         .unwrap();
 
         let signature = sign_and_hash(&payload, &priv_key);
 
-        let client = reqwest::Client::new();
-        client
-            .post("http://localhost:8090/refresh")
+        match warp::test::request()
+            .method("POST")
+            .path("/refresh")
             .body(payload)
             .header("Signature", signature)
-            .send()
+            .filter(&filter)
             .await
-            .expect("Failed to complete HTTP request")
+        {
+            Ok(r) => Ok(r.into_response().status()),
+            Err(_) => Err(()),
+        }
     }
 
     // Helpers
