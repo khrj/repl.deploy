@@ -7,4 +7,4 @@ debug/
 **/*.rs.bk
 
 # git_updater test repos
-**/git_updater/test_repo*
+**/test_repo*

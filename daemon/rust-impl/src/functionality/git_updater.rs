@@ -43,7 +43,7 @@ mod tests {
         println!(
             "{}",
             String::from_utf8_lossy(
-                &Command::new("./test_prep.sh")
+                &Command::new("./src/functionality/git_updater_test_prep.sh")
                     .output()
                     .expect("Failed to prepare repos")
                     .stdout
