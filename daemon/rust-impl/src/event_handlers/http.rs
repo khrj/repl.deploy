@@ -2,14 +2,13 @@ use {
     super::constants::{
         REFRESH_PATH, SIGNATURE_HEADER_NAME, STAT_REQUEST_RECEIVED,
         STAT_SIGNATURE_VALIDATION_FAILED, STAT_SIGNATURE_VALIDATION_SUCCESS,
-        UNKNOWN_ERROR_WHILE_PROCESSING_REQUEST,
     },
     super::signature_verifier,
     super::types,
     anyhow::Result,
     log::{error, info, warn},
     rsa::RSAPublicKey,
-    std::{borrow::Cow, convert::Infallible, sync::Arc},
+    std::{borrow::Cow, sync::Arc},
     warp::{http::StatusCode, reply, Filter},
 };
 
@@ -80,15 +79,11 @@ fn validate_payload_and_signature(
         )
 }
 
-async fn handle_rejection(err: warp::Rejection) -> Result<impl warp::Reply, Infallible> {
+async fn handle_rejection(err: warp::Rejection) -> Result<impl warp::Reply, warp::Rejection> {
     if let Some(res) = err.find::<types::ValidationResult>() {
         Ok(reply::with_status(res.body, res.status))
     } else {
-        error!("{}: {:#?}", UNKNOWN_ERROR_WHILE_PROCESSING_REQUEST, err);
-        Ok(reply::with_status(
-            UNKNOWN_ERROR_WHILE_PROCESSING_REQUEST,
-            StatusCode::INTERNAL_SERVER_ERROR,
-        ))
+        Err(err)
     }
 }
 
