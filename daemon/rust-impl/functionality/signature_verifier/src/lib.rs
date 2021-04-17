@@ -198,13 +198,14 @@ mod tests {
 
     #[test]
     fn verify_payload_and_signature() {
+        let (pub_key, priv_key) = new_keypair();
+
         let payload = serde_json::to_vec(&Payload {
             timestamp: now_ms(),
             endpoint: TEST_ENDPOINT.to_owned(),
         })
         .unwrap();
 
-        let (pub_key, priv_key) = new_keypair();
         let signature = sign_and_hash(&payload, &priv_key);
 
         let result = validate_payload_and_signature(
