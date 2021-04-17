@@ -1,19 +1,20 @@
 use {
-    anyhow::Result,
-    constants::{
-        STAT_REQUEST_RECEIVED, STAT_SIGNATURE_VALIDATION_FAILED, STAT_SIGNATURE_VALIDATION_SUCCESS,
+    super::constants::{
+        REFRESH_PATH, SIGNATURE_HEADER_NAME, STAT_REQUEST_RECEIVED,
+        STAT_SIGNATURE_VALIDATION_FAILED, STAT_SIGNATURE_VALIDATION_SUCCESS,
         UNKNOWN_ERROR_WHILE_PROCESSING_REQUEST,
     },
-    logger,
+    super::signature_verifier,
+    super::types,
+    anyhow::Result,
+    log::{error, info, warn},
     rsa::RSAPublicKey,
-    signature_verifier,
     std::{borrow::Cow, convert::Infallible, sync::Arc},
-    types::{Config, ValidationResult},
     warp::{http::StatusCode, reply, Filter},
 };
 
 pub async fn listen<S: Send + Sync + Clone + 'static>(
-    config_ref: Arc<Config>,
+    config_ref: Arc<types::Config>,
     public_key_ref: Arc<RSAPublicKey>,
     state: S,
     handler: impl Fn(S) -> Result<()> + Clone + Send + Sync + 'static,
@@ -24,66 +25,66 @@ pub async fn listen<S: Send + Sync + Clone + 'static>(
 }
 
 fn refresher<S: Send + Sync + Clone + 'static>(
-    config_ref: Arc<Config>,
+    config_ref: Arc<types::Config>,
     public_key_ref: Arc<RSAPublicKey>,
     state: S,
     handler: impl Fn(S) -> Result<()> + Clone + Send + Sync + 'static,
 ) -> impl Filter<Extract = (reply::WithStatus<Cow<'static, str>>,), Error = warp::Rejection> + Clone
 {
     warp::post()
-        .and(warp::path("refresh"))
+        .and(warp::path(REFRESH_PATH))
         .and(validate_payload_and_signature(config_ref, public_key_ref))
         .map(move |res: types::ValidationResult| {
-            logger::success(STAT_SIGNATURE_VALIDATION_SUCCESS);
+            info!("{}", STAT_SIGNATURE_VALIDATION_SUCCESS);
 
             let state = state.clone();
             let body = res.body;
             match handler(state) {
                 Ok(()) => reply::with_status(Cow::from(body), StatusCode::OK),
                 Err(e) => {
-                    let e = e.to_string();
-                    logger::error(&e);
-
-                    reply::with_status(Cow::from(e), StatusCode::INTERNAL_SERVER_ERROR)
+                    error!("{}", e);
+                    reply::with_status(Cow::from(e.to_string()), StatusCode::INTERNAL_SERVER_ERROR)
                 }
             }
         })
 }
 
 fn validate_payload_and_signature(
-    config_ref: Arc<Config>,
+    config_ref: Arc<types::Config>,
     public_key_ref: Arc<RSAPublicKey>,
 ) -> impl Filter<Extract = (types::ValidationResult,), Error = warp::Rejection> + Clone {
-    warp::body::bytes().and(warp::header("Signature")).and_then(
-        move |payload: warp::hyper::body::Bytes, signature: String| {
-            let config = config_ref.clone();
-            let public_key = public_key_ref.clone();
+    warp::body::bytes()
+        .and(warp::header(SIGNATURE_HEADER_NAME))
+        .and_then(
+            move |payload: warp::hyper::body::Bytes, signature: String| {
+                let config = config_ref.clone();
+                let public_key = public_key_ref.clone();
 
-            async move {
-                logger::info(STAT_REQUEST_RECEIVED);
+                async move {
+                    info!("{}", STAT_REQUEST_RECEIVED);
 
-                match signature_verifier::validate_payload_and_signature(
-                    &payload.to_vec(),
-                    &signature,
-                    &config,
-                    &public_key,
-                ) {
-                    Ok(res) => Ok(res),
-                    Err(e) => {
-                        logger::warn(STAT_SIGNATURE_VALIDATION_FAILED);
-                        Err(warp::reject::custom(e))
+                    match signature_verifier::validate_payload_and_signature(
+                        &payload.to_vec(),
+                        &signature,
+                        &config,
+                        &public_key,
+                    ) {
+                        Ok(res) => Ok(res),
+                        Err(e) => {
+                            warn!("{}", STAT_SIGNATURE_VALIDATION_FAILED);
+                            Err(warp::reject::custom(e))
+                        }
                     }
                 }
-            }
-        },
-    )
+            },
+        )
 }
 
 async fn handle_rejection(err: warp::Rejection) -> Result<impl warp::Reply, Infallible> {
-    if let Some(res) = err.find::<ValidationResult>() {
+    if let Some(res) = err.find::<types::ValidationResult>() {
         Ok(reply::with_status(res.body, res.status))
     } else {
-        logger::error(UNKNOWN_ERROR_WHILE_PROCESSING_REQUEST); // TODO LOG ERROR
+        error!("{}: {:#?}", UNKNOWN_ERROR_WHILE_PROCESSING_REQUEST, err);
         Ok(reply::with_status(
             UNKNOWN_ERROR_WHILE_PROCESSING_REQUEST,
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -134,7 +135,7 @@ mod tests {
     ) -> impl Filter<Extract = (reply::WithStatus<Cow<'static, str>>,), Error = warp::Rejection> + Clone
     {
         refresher(
-            Arc::new(Config {
+            Arc::new(types::Config {
                 endpoint: endpoint.to_owned(),
             }),
             Arc::new(pub_key),
@@ -162,7 +163,7 @@ mod tests {
             .method("POST")
             .path("/refresh")
             .body(payload)
-            .header("Signature", signature)
+            .header(SIGNATURE_HEADER_NAME, signature)
             .filter(&filter)
             .await
         {

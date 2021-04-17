@@ -1,6 +1,6 @@
 use {
+    super::constants::{GIT_FETCH_FAILED_ERROR, GIT_RESET_FAILED_ERROR},
     anyhow::{bail, Result},
-    constants::{GIT_FETCH_FAILED_ERROR, GIT_RESET_FAILED_ERROR},
     std::process::Command,
 };
 

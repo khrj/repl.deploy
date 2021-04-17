@@ -1,15 +1,28 @@
-[workspace]
+[package]
+name = "repl_deploy"
+version = "0.1.0"
+authors = ["Khushraj Rathod <khushraj.rathod@gmail.com>"]
+edition = "2018"
 
-members = [
-    "cli",
+[dependencies]
+rsa = "0.4.0"
+serde_json = "1.0.64"
+clap = "2.33.3"
+anyhow = "1.0.40"
+tokio = { version = "1.4.0", features = ["full"] }
+warp = "0.3"
+serde = { version = "1.0.125", features = ["derive"]  }
+regex = "1.4.5"
+base64 = "0.13.0"
+binary_macros = "1.0.0"
+sha2 = "0.9.3"
+reqwest = "0.11.2"
+log = "0.4.14"
+pretty_env_logger = "0.4.0"
 
-    "static/types",
-    "static/constants",
-
-    "functionality/signature_verifier",
-    "functionality/git_updater",
-    "functionality/logger",
-
-    "event_handlers/http_event_handler",
-    "event_handlers/stdio_event_handler"
-]
+[dev-dependencies]
+base64 = "0.13.0"
+lazy_static = "1.4.0"
+rand = "0.8.3"
+serde_json = "1.0.64"
+sha2 = "0.9.3"

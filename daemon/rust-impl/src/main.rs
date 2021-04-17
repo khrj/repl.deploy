@@ -1,6 +1,7 @@
 use {
     clap::{crate_version, App, Arg},
-    cli as lib,
+    log::debug,
+    pretty_env_logger, repl_deploy as lib,
 };
 
 const EXAMPLES: &str = "EXAMPLES:
@@ -11,6 +12,8 @@ const EXAMPLES: &str = "EXAMPLES:
 
 #[tokio::main]
 async fn main() {
+    pretty_env_logger::init();
+
     let matches = App::new("repl.deploy")
         .bin_name("repl.deploy")
         .version(crate_version!())
@@ -44,10 +47,10 @@ async fn main() {
 
     drop(matches);
 
-    println!("Cmd: {:#?}", cmd);
-    println!("Args: {:#?}", args);
-    println!(
-        "Event handler: {:#?}",
+    debug!("Cmd: {:?}", cmd);
+    debug!("Args: {:?}", args);
+    debug!(
+        "Event handler: {:?}",
         match event_handler {
             lib::EventHandler::Http => "HTTP",
             lib::EventHandler::Stdio => "STDIO",
@@ -56,5 +59,3 @@ async fn main() {
 
     lib::listen(event_handler, cmd, args).await;
 }
-
-// :)

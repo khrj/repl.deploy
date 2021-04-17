@@ -5,6 +5,7 @@ pub const STDIN_REGEX: &str = r"repl\.deploy(\{.*})(.*)";
 pub const STDIN_SUCCESS: &str = "repl.deploy-success";
 pub const STDIN_RESPONDED_SUCCESSFULLY: &str = "Responded successfully";
 pub const OK: &str = "OK";
+pub const REFRESH_PATH: &str = "refresh";
 
 // Errors
 pub const PUBLIC_KEY_PARSE_ERROR: &str =
@@ -26,8 +27,6 @@ pub const UNKNOWN_ERROR_WHILE_PROCESSING_REQUEST: &str =
     "An unknown error occured while processing the request";
 
 // Warnings
-pub const SIGNATURE_VALIDATION_FAILED_WARN: &str =
-    "Signature validation failed for an event, so listeners will not be called";
 pub const GIT_FETCH_FAILED_STARTUP_WARN: &str =
     "Failed to fetch from GitHub on startup, make sure git is set up";
 

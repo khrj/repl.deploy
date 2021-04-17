@@ -1,17 +1,15 @@
-mod helpers;
-
 use {
-    anyhow::Result,
-    base64,
-    constants::{
+    super::constants::{
         BAD_ENDPOINT_ERROR, BAD_PAYLOAD_ERROR, INVALID_SIGNATURE_ERROR, OK, PAYLOAD_TOO_OLD_ERROR,
     },
-    helpers::is_older_than_fifteen_seconds,
+    super::types::{Config, Payload, ValidationResult},
+    anyhow::Result,
+    base64,
     reqwest::StatusCode,
     rsa::{hash, PaddingScheme, PublicKey, RSAPublicKey},
     serde_json,
     sha2::{Digest, Sha256},
-    types::{Config, Payload, ValidationResult},
+    std::time::{SystemTime, UNIX_EPOCH},
 };
 
 pub fn validate_payload_and_signature(
@@ -24,10 +22,7 @@ pub fn validate_payload_and_signature(
     validate_signature(&payload, &signature, &public_key)
 }
 
-fn validate_payload(
-    body: &[u8],
-    config: &Config,
-) -> Result<ValidationResult, ValidationResult> {
+fn validate_payload(body: &[u8], config: &Config) -> Result<ValidationResult, ValidationResult> {
     let payload: Payload = match serde_json::from_slice(body) {
         Ok(payload) => payload,
         Err(_) => {
@@ -257,4 +252,12 @@ mod tests {
         hasher.update(body);
         Vec::from(hasher.finalize().as_slice())
     }
+}
+
+fn is_older_than_fifteen_seconds(ts: u128) -> bool {
+    ts < (SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis()
+        - 15000)
 }

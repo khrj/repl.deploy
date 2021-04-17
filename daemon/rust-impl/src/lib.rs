@@ -1,3 +1,10 @@
+mod constants;
+mod git_updater;
+mod http_event_handler;
+mod signature_verifier;
+mod stdio_event_handler;
+mod types;
+
 use {
     anyhow::{bail, Context, Result},
     constants::{
@@ -5,7 +12,7 @@ use {
         GIT_FETCH_FAILED_STARTUP_WARN, INVALID_CONFIG_JSON_ERROR, MISSING_CONFIG_FILE_ERROR,
         PUBLIC_KEY_PARSE_ERROR, REPLIT_DEPLOY_JSON_PATH, STAT_PROGRAM_STARTED,
     },
-    git_updater, http_event_handler, logger,
+    log::{error, info, warn},
     rsa::RSAPublicKey,
     serde_json,
     std::{
@@ -15,7 +22,6 @@ use {
         rc::Rc,
         sync::{Arc, Mutex},
     },
-    stdio_event_handler,
     types::Config,
 };
 
@@ -49,7 +55,7 @@ PUN9Kexr5nSWWfb0AJRTaZBxiXx4SKdo2yw6aaoIAOo6SyJLm0u0Qwa5Xm7GG0NS
 yggLIsW8CUnOIhj0AKovh9OvyC//N/GRLQIDAQAB
 -----END RSA PUBLIC KEY-----
 */
-const REPL_DEPLOY_PUBLIC_KEY: &[u8; 1038] = include_bytes!("../../static/public_key.bin");
+const REPL_DEPLOY_PUBLIC_KEY: &[u8; 1038] = include_bytes!("./public_key.bin");
 
 pub enum EventHandler {
     Http,
@@ -59,24 +65,24 @@ pub enum EventHandler {
 pub async fn listen(event_handler: EventHandler, cmd: String, cmd_args: Vec<String>) {
     let repl_deploy_public_key =
         RSAPublicKey::from_pkcs1(REPL_DEPLOY_PUBLIC_KEY).unwrap_or_else(|_err| {
-            println!("{}", PUBLIC_KEY_PARSE_ERROR);
+            error!("{}", PUBLIC_KEY_PARSE_ERROR);
             process::exit(1);
         });
 
     let config: Config = serde_json::from_str(
         &fs::read_to_string(REPLIT_DEPLOY_JSON_PATH).unwrap_or_else(|_err| {
-            println!("{}", MISSING_CONFIG_FILE_ERROR);
+            error!("{}", MISSING_CONFIG_FILE_ERROR);
             process::exit(1);
         }),
     )
     .unwrap_or_else(|_err| {
-        println!("{}", INVALID_CONFIG_JSON_ERROR);
+        error!("{}", INVALID_CONFIG_JSON_ERROR);
         process::exit(1)
     });
 
     if let Err(e) = git_updater::update_git_from_remote() {
-        logger::error(&e.to_string());
-        logger::warn(GIT_FETCH_FAILED_STARTUP_WARN);
+        error!("{}", e);
+        warn!("{}", GIT_FETCH_FAILED_STARTUP_WARN);
     }
 
     match event_handler {
@@ -89,8 +95,8 @@ async fn listen_http(pub_key: RSAPublicKey, config: Config, cmd: String, cmd_arg
     let child = match Command::new(&cmd).args(&cmd_args).spawn() {
         Ok(child_handle) => child_handle,
         Err(_) => {
-            logger::fatal_error(FAILED_TO_START_CHILD_PROCESS_ERROR);
-            return;
+            error!("{}", FAILED_TO_START_CHILD_PROCESS_ERROR);
+            process::exit(1)
         }
     };
 
@@ -107,7 +113,7 @@ async fn listen_http(pub_key: RSAPublicKey, config: Config, cmd: String, cmd_arg
                     Ok(())
                 }
                 Err(e) => {
-                    logger::error(&e.to_string());
+                    error!("{}", e);
                     bail!(e);
                 }
             }
@@ -126,8 +132,8 @@ fn listen_stdio(pub_key: RSAPublicKey, config: Config, cmd: String, cmd_args: Ve
         {
             Ok(child_handle) => child_handle,
             Err(_) => {
-                logger::fatal_error(FAILED_TO_START_CHILD_PROCESS_ERROR);
-                return;
+                error!("{}", FAILED_TO_START_CHILD_PROCESS_ERROR);
+                process::exit(1)
             }
         },
     ));
@@ -148,7 +154,7 @@ fn listen_stdio(pub_key: RSAPublicKey, config: Config, cmd: String, cmd_args: Ve
                 Ok(child.clone())
             }
             Err(e) => {
-                logger::error(&e.to_string());
+                error!("{}", e);
                 bail!(e);
             }
         }
@@ -178,7 +184,7 @@ fn update_and_restart_process(
 
     match child {
         Ok(child_handle) => {
-            logger::success(STAT_PROGRAM_STARTED);
+            info!("{}", STAT_PROGRAM_STARTED);
             Ok(child_handle)
         }
         Err(_) => bail!(FAILED_TO_START_CHILD_PROCESS_ERROR),
