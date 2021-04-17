@@ -150,7 +150,7 @@ mod tests {
             + Clone
             + 'static,
     ) -> Result<StatusCode, ()> {
-        let payload = serde_json::to_string(&Payload {
+        let payload = serde_json::to_vec(&Payload {
             timestamp: now_ms(),
             endpoint: endpoint.to_owned(),
         })
@@ -190,7 +190,7 @@ mod tests {
             .as_millis()
     }
 
-    fn sign_and_hash(body: &str, priv_key: &RSAPrivateKey) -> String {
+    fn sign_and_hash(body: &[u8], priv_key: &RSAPrivateKey) -> String {
         base64::encode(
             priv_key
                 .sign(
@@ -203,7 +203,7 @@ mod tests {
         )
     }
 
-    fn hash(body: &str) -> Vec<u8> {
+    fn hash(body: &[u8]) -> Vec<u8> {
         let mut hasher = Sha256::new();
         hasher.update(body);
         Vec::from(hasher.finalize().as_slice())
