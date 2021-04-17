@@ -24,7 +24,7 @@ pub fn validate_payload_and_signature(
     validate_signature(&payload, &signature, &public_key)
 }
 
-fn validate_payload<'a>(
+fn validate_payload(
     body: &[u8],
     config: &Config,
 ) -> Result<ValidationResult, ValidationResult> {

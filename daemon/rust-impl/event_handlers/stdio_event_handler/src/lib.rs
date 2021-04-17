@@ -133,8 +133,8 @@ fn validate_and_return_response(
 use serde::Serialize;
 
 #[derive(Serialize)]
-struct ValidationResultSerializable<'a> {
-    body: &'a str,
+struct ValidationResultSerializable {
+    body: &'static str,
     status: u16,
 }
 
