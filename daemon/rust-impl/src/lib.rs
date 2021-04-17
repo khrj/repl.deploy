@@ -1,8 +1,19 @@
+#[path = "static/constants.rs"]
 mod constants;
+
+#[path = "functionality/git_updater.rs"]
 mod git_updater;
-mod http_event_handler;
+
+#[path = "functionality/signature_verifier.rs"]
 mod signature_verifier;
+
+#[path = "event_handlers/http.rs"]
+mod http_event_handler;
+
+#[path = "event_handlers/stdio.rs"]
 mod stdio_event_handler;
+
+#[path = "static/types.rs"]
 mod types;
 
 use {
@@ -55,7 +66,7 @@ PUN9Kexr5nSWWfb0AJRTaZBxiXx4SKdo2yw6aaoIAOo6SyJLm0u0Qwa5Xm7GG0NS
 yggLIsW8CUnOIhj0AKovh9OvyC//N/GRLQIDAQAB
 -----END RSA PUBLIC KEY-----
 */
-const REPL_DEPLOY_PUBLIC_KEY: &[u8; 1038] = include_bytes!("./public_key.bin");
+const REPL_DEPLOY_PUBLIC_KEY: &[u8; 1038] = include_bytes!("static/public_key.bin");
 
 pub enum EventHandler {
     Http,
