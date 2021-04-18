@@ -1,5 +1,5 @@
 use {
-    clap::{crate_version, App, Arg},
+    clap::{crate_version, App, AppSettings, Arg},
     log::debug,
     pretty_env_logger, repl_deploy as lib,
 };
@@ -15,6 +15,7 @@ async fn main() {
     pretty_env_logger::init();
 
     let matches = App::new("repl.deploy")
+        .setting(AppSettings::TrailingVarArg)
         .bin_name("repl.deploy")
         .version(crate_version!())
         .author("Khushraj Rathod <khushraj.rathod@gmail.com>")
