@@ -35,6 +35,8 @@ pub fn listen(
             public_key,
         );
 
+        debug!("Successful request, trying to restart process");
+
         match handler() {
             Ok(new_child) => {
                 child_ref = new_child;
@@ -79,12 +81,14 @@ fn scan_process_stdout_until_successful_request(
                 };
 
                 debug!("About to write response to stdin");
-
                 write_response(&response, writer);
+                debug!("Wrote to subprocess stdin");
             }
             None => println!("{}", &line),
         }
     }
+
+    debug!("SUCCESS! :)")
 }
 
 // Helpers
@@ -97,9 +101,7 @@ fn filter_valid_lines(line: Result<String, io::Error>) -> Option<String> {
 }
 
 fn write_response(response: &[u8], writer: &mut std::process::ChildStdin) {
-    if writer.write(response).is_err() {
-        error!("{}", PROBLEMS_WRITING_TO_STDIN_OF_SUBPROCESS_ERROR)
-    };
+    writer.write(response).unwrap();
 }
 
 fn get_matches<'a>(line: &'a str, stdin_regex: &Regex) -> Option<(&'a [u8], &'a str)> {
