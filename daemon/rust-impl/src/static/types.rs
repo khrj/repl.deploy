@@ -1,7 +1,8 @@
-use reqwest::StatusCode;
-use serde::{Deserialize, Serialize};
-use std::fmt;
-use warp::reject::Reject;
+use {
+    serde::{Deserialize, Serialize},
+    std::fmt,
+    warp::{http::StatusCode, reject::Reject},
+};
 
 #[derive(Serialize, Deserialize)]
 pub struct Payload {

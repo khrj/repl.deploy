@@ -5,11 +5,11 @@ use {
     super::types::{Config, Payload, ValidationResult},
     anyhow::Result,
     base64,
-    reqwest::StatusCode,
     rsa::{hash, PaddingScheme, PublicKey, RSAPublicKey},
     serde_json,
     sha2::{Digest, Sha256},
     std::time::{SystemTime, UNIX_EPOCH},
+    warp::http::StatusCode,
 };
 
 pub fn validate_payload_and_signature(
