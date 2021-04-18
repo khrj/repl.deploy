@@ -7,7 +7,7 @@ use {
     super::signature_verifier,
     super::types::{Config, ValidationResult},
     anyhow::Result,
-    log::{error, info, warn},
+    log::{debug, error, info, warn},
     regex::Regex,
     rsa::RSAPublicKey,
     serde_json,
@@ -77,6 +77,8 @@ fn scan_process_stdout_until_successful_request(
                     Some(r) => r,
                     None => continue,
                 };
+
+                debug!("About to write response to stdin");
 
                 write_response(&response, writer);
             }
