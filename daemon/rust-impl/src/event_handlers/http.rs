@@ -20,7 +20,7 @@ pub async fn listen<S: Send + Sync + Clone + 'static>(
 ) {
     let refresher = refresher(config_ref, public_key_ref, state, handler).recover(handle_rejection);
 
-    warp::serve(refresher).run(([127, 0, 0, 1], 8090)).await;
+    warp::serve(refresher).run(([0, 0, 0, 0], 8090)).await;
 }
 
 fn refresher<S: Send + Sync + Clone + 'static>(
