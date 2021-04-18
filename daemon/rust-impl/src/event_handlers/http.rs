@@ -18,7 +18,9 @@ pub async fn listen<S: Send + Sync + Clone + 'static>(
     state: S,
     handler: impl Fn(S) -> Result<()> + Clone + Send + Sync + 'static,
 ) {
-    let refresher = refresher(config_ref, public_key_ref, state, handler).recover(handle_rejection);
+    let refresher = refresher(config_ref, public_key_ref, state, handler)
+        .or(repl_deploy_is_working_msg())
+        .recover(handle_rejection);
 
     warp::serve(refresher).run(([0, 0, 0, 0], 8090)).await;
 }
@@ -46,6 +48,11 @@ fn refresher<S: Send + Sync + Clone + 'static>(
                 }
             }
         })
+}
+
+fn repl_deploy_is_working_msg(
+) -> impl Filter<Extract = (&'static str,), Error = warp::Rejection> + Clone {
+    warp::get().map(|| "repl.deploy is running")
 }
 
 fn validate_payload_and_signature(
