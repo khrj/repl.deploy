@@ -101,7 +101,7 @@ fn filter_valid_lines(line: Result<String, io::Error>) -> Option<String> {
 }
 
 fn write_response(response: &[u8], writer: &mut std::process::ChildStdin) {
-    writer.write(response).unwrap();
+    writer.write_all(response).unwrap();
 }
 
 fn get_matches<'a>(line: &'a str, stdin_regex: &Regex) -> Option<(&'a [u8], &'a str)> {
