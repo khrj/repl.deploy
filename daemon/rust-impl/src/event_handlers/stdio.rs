@@ -16,6 +16,7 @@ use {
         io::{self, BufRead, BufReader, Write},
         process::Child,
         rc::Rc,
+        str,
     },
 };
 
@@ -58,7 +59,7 @@ fn scan_process_stdout_until_successful_request(
     let mut stdin = child.stdin.take();
 
     let reader = BufReader::new(stdout.as_mut().unwrap());
-    let writer = stdin.as_mut().unwrap();
+    let mut writer = stdin.take().unwrap();
 
     for line in reader.lines().filter_map(filter_valid_lines) {
         if line == STDIN_SUCCESS {
@@ -81,7 +82,8 @@ fn scan_process_stdout_until_successful_request(
                 };
 
                 debug!("About to write response to stdin");
-                write_response(&response, writer);
+                debug!("Response: {}", str::from_utf8(&response).unwrap());
+                writer.write_all(&response).unwrap();
                 debug!("Wrote to subprocess stdin");
             }
             None => println!("{}", &line),
@@ -98,10 +100,6 @@ fn filter_valid_lines(line: Result<String, io::Error>) -> Option<String> {
         Ok(line) => Some(line),
         Err(_) => None,
     }
-}
-
-fn write_response(response: &[u8], writer: &mut std::process::ChildStdin) {
-    writer.write_all(response).unwrap();
 }
 
 fn get_matches<'a>(line: &'a str, stdin_regex: &Regex) -> Option<(&'a [u8], &'a str)> {
