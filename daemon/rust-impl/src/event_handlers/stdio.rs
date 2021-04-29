@@ -81,16 +81,12 @@ fn scan_process_stdout_until_successful_request(
                     None => continue,
                 };
 
-                debug!("About to write response to stdin");
-                debug!("Response: {}", str::from_utf8(&response).unwrap());
-                writer.write_all(&response).unwrap();
-                debug!("Wrote to subprocess stdin");
+                debug!("Writing response: {}", str::from_utf8(&response).unwrap());
+                write_response(&response, &mut writer);
             }
             None => println!("{}", &line),
         }
     }
-
-    debug!("SUCCESS! :)")
 }
 
 // Helpers
@@ -100,6 +96,12 @@ fn filter_valid_lines(line: Result<String, io::Error>) -> Option<String> {
         Ok(line) => Some(line),
         Err(_) => None,
     }
+}
+
+fn write_response(response: &[u8], writer: &mut std::process::ChildStdin) {
+    if writer.write_all(response).and(writer.flush()).is_err() {
+        error!("{}", PROBLEMS_WRITING_TO_STDIN_OF_SUBPROCESS_ERROR)
+    };
 }
 
 fn get_matches<'a>(line: &'a str, stdin_regex: &Regex) -> Option<(&'a [u8], &'a str)> {
