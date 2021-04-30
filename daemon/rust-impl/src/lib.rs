@@ -91,7 +91,7 @@ pub async fn listen(event_handler: EventHandler, cmd: String, cmd_args: Vec<Stri
         process::exit(1)
     });
 
-    if let Err(e) = git_updater::update_git_from_remote() {
+    if let Err(e) = git_updater::update_git_from_remote(None) {
         error!("{}", e);
         warn!("{}", GIT_FETCH_FAILED_STARTUP_WARN);
     }
@@ -183,7 +183,7 @@ fn update_and_restart_process(
     cmd_args: &[&str],
     event_handler: EventHandler,
 ) -> Result<Child> {
-    git_updater::update_git_from_remote()?;
+    git_updater::update_git_from_remote(None)?;
 
     child_handle
         .kill()

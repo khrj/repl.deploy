@@ -165,14 +165,6 @@ mod tests {
 
     #[test]
     fn test_stdio() {
-        println!(
-            "{}",
-            fs::canonicalize("./src/event_handlers/stdio_test/")
-                .unwrap()
-                .to_str()
-                .unwrap()
-        );
-
         compile_test_bin();
 
         let test_bin =
