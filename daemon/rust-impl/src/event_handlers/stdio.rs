@@ -184,7 +184,7 @@ mod tests {
     fn compile_test_bin() {
         Command::new("rustc")
             .arg("test_bin.rs")
-            .current_dir("./src/event_handlers/stdio-test")
+            .current_dir("./src/event_handlers/stdio_test/")
             .output()
             .unwrap();
     }
