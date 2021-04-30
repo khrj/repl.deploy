@@ -14,9 +14,8 @@ use {
     std::{
         cell::RefCell,
         io::{self, BufRead, BufReader, Write},
-        process::Child,
+        process::{self, Child},
         rc::Rc,
-        str,
     },
 };
 
@@ -29,13 +28,25 @@ pub fn listen(
     let mut child_ref = child;
     let stdin_regex = Regex::new(STDIN_REGEX).unwrap();
     loop {
-        scan_process_stdout_until_successful_request(
+        scan_process_stdout_until_success(
             child_ref.clone(),
             &stdin_regex,
-            config,
-            public_key,
+            |payload, signature, writer| {
+                info!("{}", STAT_REQUEST_RECEIVED);
+
+                let response = match validation_result_to_string(validate_and_return_response(
+                    payload, signature, config, public_key,
+                )) {
+                    Some(r) => r,
+                    None => return,
+                };
+
+                debug!("Writing response: {}", &response);
+                write_response(&response, writer);
+            },
         );
 
+        info!("{}", STDIN_RESPONDED_SUCCESSFULLY);
         debug!("Successful request, trying to restart process");
 
         match handler() {
@@ -47,43 +58,23 @@ pub fn listen(
     }
 }
 
-fn scan_process_stdout_until_successful_request(
+fn scan_process_stdout_until_success(
     child: Rc<RefCell<Child>>,
     stdin_regex: &Regex,
-    config: &Config,
-    public_key: &RSAPublicKey,
+    handle_request: impl Fn(&[u8], &str, &mut process::ChildStdin) -> (),
 ) {
     let mut child = child.borrow_mut();
 
-    let mut stdout = child.stdout.take();
-    let mut stdin = child.stdin.take();
-
-    let reader = BufReader::new(stdout.as_mut().unwrap());
-    let mut writer = stdin.take().unwrap();
+    let mut writer = child.stdin.take().unwrap();
+    let reader = BufReader::new(child.stdout.as_mut().unwrap());
 
     for line in reader.lines().filter_map(filter_valid_lines) {
         if line == STDIN_SUCCESS {
-            info!("{}", STDIN_RESPONDED_SUCCESSFULLY);
             break;
         }
 
         match get_matches(&line, stdin_regex) {
-            Some((payload, input_signature)) => {
-                info!("{}", STAT_REQUEST_RECEIVED);
-
-                let response = match validation_result_to_bytes(validate_and_return_response(
-                    payload,
-                    input_signature,
-                    config,
-                    public_key,
-                )) {
-                    Some(r) => r,
-                    None => continue,
-                };
-
-                debug!("Writing response: {}", str::from_utf8(&response).unwrap());
-                write_response(&response, &mut writer);
-            }
+            Some((payload, signature)) => handle_request(payload, signature, &mut writer),
             None => println!("{}", &line),
         }
     }
@@ -98,8 +89,12 @@ fn filter_valid_lines(line: Result<String, io::Error>) -> Option<String> {
     }
 }
 
-fn write_response(response: &[u8], writer: &mut std::process::ChildStdin) {
-    if writer.write_all(response).and(writer.flush()).is_err() {
+fn write_response(response: &str, writer: &mut std::process::ChildStdin) {
+    if writer
+        .write_all(response.as_bytes())
+        .and(writer.flush())
+        .is_err()
+    {
         error!("{}", PROBLEMS_WRITING_TO_STDIN_OF_SUBPROCESS_ERROR)
     };
 }
@@ -143,17 +138,54 @@ struct ValidationResultSerializable {
     status: u16,
 }
 
-fn validation_result_to_bytes(r: ValidationResult) -> Option<Vec<u8>> {
+fn validation_result_to_string(r: ValidationResult) -> Option<String> {
     let r = ValidationResultSerializable {
         body: r.body,
         status: r.status.as_u16(),
     };
 
-    match serde_json::to_vec(&r) {
-        Ok(json) => Some(json),
+    match serde_json::to_string(&r) {
+        Ok(json) => Some(json + "\n"),
         Err(_) => {
             error!("{}", PROBLEMS_SERIALIZING_JSON_ERROR);
             None
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use {
+        super::*,
+        std::process::{Command, Stdio},
+    };
+
+    #[test]
+    fn test_stdio() {
+        compile_test_bin();
+
+        let test_bin = Command::new("./src/event_handlers/stdio-test/test_bin")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .unwrap();
+
+        let stdin_regex = Regex::new(STDIN_REGEX).unwrap();
+
+        scan_process_stdout_until_success(
+            Rc::new(RefCell::new(test_bin)),
+            &stdin_regex,
+            |_payload, _signature, writer| {
+                writer.write_all(b"ok\n").and(writer.flush()).unwrap();
+            },
+        )
+    }
+
+    fn compile_test_bin() {
+        Command::new("rustc")
+            .arg("test_bin.rs")
+            .current_dir("./src/event_handlers/stdio-test")
+            .output()
+            .unwrap();
     }
 }
