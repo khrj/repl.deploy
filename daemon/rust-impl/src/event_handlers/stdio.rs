@@ -157,18 +157,30 @@ fn validation_result_to_string(r: ValidationResult) -> Option<String> {
 mod tests {
     use {
         super::*,
-        std::process::{Command, Stdio},
+        std::{
+            fs,
+            process::{Command, Stdio},
+        },
     };
 
     #[test]
     fn test_stdio() {
+        println!(
+            "{}",
+            fs::canonicalize("./src/event_handlers/stdio_test/")
+                .unwrap()
+                .to_str()
+                .unwrap()
+        );
+
         compile_test_bin();
 
-        let test_bin = Command::new("./src/event_handlers/stdio-test/test_bin")
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .spawn()
-            .unwrap();
+        let test_bin =
+            Command::new(fs::canonicalize("./src/event_handlers/stdio_test/test_bin").unwrap())
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .spawn()
+                .unwrap();
 
         let stdin_regex = Regex::new(STDIN_REGEX).unwrap();
 
@@ -184,7 +196,7 @@ mod tests {
     fn compile_test_bin() {
         Command::new("rustc")
             .arg("test_bin.rs")
-            .current_dir("./src/event_handlers/stdio_test/")
+            .current_dir(fs::canonicalize("./src/event_handlers/stdio_test/").unwrap())
             .output()
             .unwrap();
     }
