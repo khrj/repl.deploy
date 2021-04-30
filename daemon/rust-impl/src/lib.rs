@@ -23,7 +23,7 @@ use {
         GIT_FETCH_FAILED_STARTUP_WARN, INVALID_CONFIG_JSON_ERROR, MISSING_CONFIG_FILE_ERROR,
         PUBLIC_KEY_PARSE_ERROR, REPLIT_DEPLOY_JSON_PATH, STAT_PROGRAM_STARTED,
     },
-    log::{error, info, warn},
+    log::{debug, error, info, warn},
     rsa::RSAPublicKey,
     serde_json,
     std::{
@@ -91,7 +91,7 @@ pub async fn listen(event_handler: EventHandler, cmd: String, cmd_args: Vec<Stri
         process::exit(1)
     });
 
-    if let Err(e) = git_updater::update_git_from_remote() {
+    if let Err(e) = git_updater::update_git_from_remote(None) {
         error!("{}", e);
         warn!("{}", GIT_FETCH_FAILED_STARTUP_WARN);
     }
@@ -152,12 +152,17 @@ fn listen_stdio(pub_key: RSAPublicKey, config: Config, cmd: String, cmd_args: Ve
     stdio_event_handler::listen(&pub_key, &config, child.clone(), &mut move || {
         let child_ref = child.clone();
         let cmd_args: Vec<_> = cmd_args.iter().map(|s| s.as_str()).collect();
+
+        debug!("Updating and restarting process...");
+
         let result = update_and_restart_process(
             &mut *child_ref.borrow_mut(),
             &cmd,
             &cmd_args,
             EventHandler::Stdio,
         );
+
+        debug!("Updated and restarted process!");
 
         match result {
             Ok(new_handle) => {
@@ -178,7 +183,7 @@ fn update_and_restart_process(
     cmd_args: &[&str],
     event_handler: EventHandler,
 ) -> Result<Child> {
-    git_updater::update_git_from_remote()?;
+    git_updater::update_git_from_remote(None)?;
 
     child_handle
         .kill()
