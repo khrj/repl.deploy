@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./daemon/rust-impl
+        working-directory: ./daemon
     
     steps:
     - uses: actions/checkout@v2
@@ -20,7 +20,7 @@ jobs:
     - name: Cache
       uses: Swatinem/rust-cache@v1.2.0
       with: 
-        working-directory: ./daemon/rust-impl
+        working-directory: ./daemon
 
     - name: Build
       run: cargo build --release
@@ -32,7 +32,7 @@ jobs:
       uses: actions-rs/clippy-check@v1
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        args: --manifest-path ./daemon/rust-impl/Cargo.toml
+        args: --manifest-path ./daemon/Cargo.toml
         
     - name: Rename
       run: mv target/release/repl_deploy target/release/repl.deploy
@@ -45,4 +45,4 @@ jobs:
         prerelease: true
         title: "Development Build"
         files: |
-          daemon/rust-impl/target/release/repl.deploy
+          daemon/target/release/repl.deploy

@@ -8,7 +8,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Debug",
-            "program": "${workspaceFolder}/daemon/rust-impl/target/debug/repl_deploy",
+            "program": "${workspaceFolder}/daemon/target/debug/repl_deploy",
             "args": [
                 "deno",
                 "run",
@@ -16,7 +16,7 @@
                 "--inspect-brk",
                 "server.ts"
             ],
-            "cwd": "${workspaceFolder}/daemon/rust-impl/target/debug/",
+            "cwd": "${workspaceFolder}/daemon/target/debug/",
             "sourceLanguages": [
                 "rust"
             ],
