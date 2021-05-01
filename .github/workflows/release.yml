@@ -1,28 +1,48 @@
-name: release
+name: Release
 
 on:
-  pull_request:
   push:
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
 
 jobs:
-  goreleaser:
+  release:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./daemon
+    
     steps:
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      -
-        name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.16
-      -
-        name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
-        with:
-          version: latest
-          args: release --rm-dist
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - uses: actions/checkout@v2
+    
+    - name: Cache
+      uses: Swatinem/rust-cache@v1.2.0
+      with: 
+        working-directory: ./daemon
+
+    - name: Build
+      run: cargo build --release
+
+    - name: Test
+      run: cargo test
+      
+    - name: Lint
+      uses: actions-rs/clippy-check@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        args: --manifest-path ./daemon/Cargo.toml
+        
+    - name: Rename
+      run: mv target/release/repl_deploy target/release/repl.deploy
+
+    - name: Release
+      uses: marvinpinto/action-automatic-releases@v1.1.1
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "latest"
+        prerelease: true
+        title: "Development Build"
+        files: |
+          daemon/target/release/repl.deploy
