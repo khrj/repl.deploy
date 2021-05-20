@@ -6,7 +6,6 @@ export default async (req: ServerRequest) => {
         provider: "github",
         user: "KhushrajRathod",
         repo: "repl.deploy",
-        part: "Linux",
     })
 
     req.respond({
