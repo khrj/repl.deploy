@@ -53,9 +53,8 @@
 
 5. Download `repl.deploy` to the root of your repl -- Open the shell, and run
 ```bash
-curl -sL https://repl-deploy.vercel.app/ -o repl.deploy.tar.gz 
-tar xf repl.deploy.tar.gz
-rm repl.deploy.tar.gz
+curl -sL https://repl-deploy.vercel.app/ -o repl.deploy
+chmod +x ./repl.deploy
 ```
 
 > **WARNING**: Proceeding will overwrite any local changes and reset from your GitHub repo. Commit AND push any local changes BEFORE running repl.deploy
