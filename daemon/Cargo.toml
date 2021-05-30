@@ -9,7 +9,7 @@ rsa = "0.4.0"
 serde_json = "1.0.64"
 clap = "2.33.3"
 anyhow = "1.0.40"
-tokio = { version = "1.6.0", features = ["rt-multi-thread", "macros"]}
+tokio = { version = "1.6.1", features = ["rt-multi-thread", "macros"]}
 warp = "0.3"
 serde = { version = "1.0.126", features = ["derive"]  }
 regex = "1.5.4"
