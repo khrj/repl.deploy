@@ -1,6 +1,6 @@
 {
     "name": "repl-deploy-bot",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "private": true,
     "description": "Automatically deploy to repl.it from GitHub",
     "author": "Khushraj Rathod <khushraj.rathod@gmail.com>",
@@ -21,6 +21,6 @@
         "@types/node-fetch": "2.5.10",
         "@types/sshpk": "1.10.5",
         "smee-client": "1.2.2",
-        "typescript": "4.3.2"
+        "typescript": "4.3.4"
     }
 }
