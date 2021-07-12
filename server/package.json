@@ -5,7 +5,7 @@
     "description": "Automatically deploy to repl.it from GitHub",
     "author": "Khushraj Rathod <khushraj.rathod@gmail.com>",
     "license": "MIT",
-    "homepage": "https://github.com/KhushrajRathod/repl.deploy",
+    "homepage": "https://github.com/khrj/repl.deploy",
     "scripts": {
         "build": "tsc",
         "start": "probot run ./build/index.js",

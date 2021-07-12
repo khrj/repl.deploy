@@ -5,12 +5,12 @@
         <b>Automatically deploy from GitHub to Replit, lightning fast ⚡️</b>
     </p>
     <p>
-        <img alt="build" src="https://img.shields.io/github/workflow/status/KhushrajRathod/repl.deploy/release">
-        <img alt="language" src="https://img.shields.io/github/languages/top/KhushrajRathod/repl.deploy" >
-        <img alt="code size" src="https://img.shields.io/github/languages/code-size/KhushrajRathod/repl.deploy">
-        <img alt="issues" src="https://img.shields.io/github/issues/KhushrajRathod/repl.deploy" >
-        <img alt="license" src="https://img.shields.io/github/license/KhushrajRathod/repl.deploy">
-        <img alt="version" src="https://img.shields.io/github/v/release/KhushrajRathod/repl.deploy">
+        <img alt="build" src="https://img.shields.io/github/workflow/status/khrj/repl.deploy/release">
+        <img alt="language" src="https://img.shields.io/github/languages/top/khrj/repl.deploy" >
+        <img alt="code size" src="https://img.shields.io/github/languages/code-size/khrj/repl.deploy">
+        <img alt="issues" src="https://img.shields.io/github/issues/khrj/repl.deploy" >
+        <img alt="license" src="https://img.shields.io/github/license/khrj/repl.deploy">
+        <img alt="version" src="https://img.shields.io/github/v/release/khrj/repl.deploy">
     </p>
     <p>
         <a href="https://www.producthunt.com/posts/repl-deploy?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-repl-deploy" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=288767&theme=dark" alt="repl.deploy - Automatically deploy from GitHub to Replit, lightning fast | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
@@ -130,11 +130,11 @@ chmod +x ./repl.deploy
   
 - **Q: What's `https://repl-deploy.vercel.app/`?**  
   A: A hosted version of
-  [getReleaseURL](https://github.com/KhushrajRathod/getReleaseURL), which saves
+  [get-release-url](https://github.com/khrj/get-release-url), which saves
   you the time of manually finding the latest release and linking it.
 
 ## Supporters
 
-[![Stargazers repo roster for @KhushrajRathod/repl.deploy](https://reporoster.com/stars/KhushrajRathod/repl.deploy)](https://github.com/KhushrajRathod/repl.deploy/stargazers)
+[![Stargazers repo roster for @khrj/repl.deploy](https://reporoster.com/stars/khrj/repl.deploy)](https://github.com/khrj/repl.deploy/stargazers)
 
-[![Forkers repo roster for @KhushrajRathod/repl.deploy](https://reporoster.com/forks/KhushrajRathod/repl.deploy)](https://github.com/KhushrajRathod/repl.deploy/network/members)
+[![Forkers repo roster for @khrj/repl.deploy](https://reporoster.com/forks/khrj/repl.deploy)](https://github.com/khrj/repl.deploy/network/members)

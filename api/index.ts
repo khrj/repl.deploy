@@ -4,7 +4,7 @@ import getReleaseURL from "https://deno.land/x/get_release_url@1.0.0/mod.ts"
 export default async (req: ServerRequest) => {
     const [url] = await getReleaseURL({
         provider: "github",
-        user: "KhushrajRathod",
+        user: "khrj",
         repo: "repl.deploy",
     })
 

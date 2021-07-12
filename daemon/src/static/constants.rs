@@ -9,7 +9,7 @@ pub const REFRESH_PATH: &str = "refresh";
 
 // Errors
 pub const PUBLIC_KEY_PARSE_ERROR: &str =
-    "Failed to parse public key. This shouldn't have happened, please open a new issue at https://github.com/KhushrajRathod/repl.deploy/issues/new";
+    "Failed to parse public key. This shouldn't have happened, please open a new issue at https://github.com/khrj/repl.deploy/issues/new";
 pub const MISSING_CONFIG_FILE_ERROR: &str = "Config file doesn't exist";
 pub const INVALID_CONFIG_JSON_ERROR: &str = "Invalid config JSON";
 pub const GIT_FETCH_FAILED_ERROR: &str = "'git fetch --all' failed";
